@@ -2,6 +2,7 @@
 'use client';
 
 import { useAuth } from '../../lib/auth-context';
+import { getMemberRole } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -87,8 +88,8 @@ export default function SelectPlayer() {
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Member Level</p>
-                  <p className="text-2xl font-bold">{player.memberLevel}</p>
+                  <p className="text-sm text-gray-500">Role</p>
+                  <p className="text-lg font-bold">{getMemberRole(player.memberLevel)}</p>
                 </div>
               </div>
             </button>

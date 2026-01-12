@@ -46,6 +46,8 @@ export const authApi = {
 };
 
 // Types
+export type MemberRole = 'Leader' | 'Officer' | 'Member';
+
 export interface SessionPlayer {
   allyCode: string;
   playerName: string;
@@ -53,6 +55,12 @@ export interface SessionPlayer {
   guildName: string;
   memberLevel: number;
   isMain: boolean;
+}
+
+export function getMemberRole(level: number): MemberRole {
+  if (level === 4) return 'Leader';
+  if (level === 3) return 'Officer';
+  return 'Member';
 }
 
 export interface SessionData {

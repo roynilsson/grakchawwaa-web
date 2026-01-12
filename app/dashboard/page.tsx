@@ -2,6 +2,7 @@
 'use client';
 
 import { useAuth } from '../../lib/auth-context';
+import { getMemberRole } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -123,8 +124,8 @@ export default function Dashboard() {
               <p className="text-lg font-semibold">{selectedPlayer.allyCode}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-400">Member Level</p>
-              <p className="text-lg font-semibold">{selectedPlayer.memberLevel}</p>
+              <p className="text-sm text-gray-400">Role</p>
+              <p className="text-lg font-semibold">{getMemberRole(selectedPlayer.memberLevel)}</p>
             </div>
             {selectedPlayer.guildName && (
               <div className="md:col-span-3">
