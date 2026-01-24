@@ -70,6 +70,29 @@ export const warningsApi = {
     fetchApi<WarningStats>(`/api/warnings/stats/my?guildId=${guildId}&playerId=${playerId}`),
   getTypes: (guildId: string) =>
     fetchApi<{ warningTypes: WarningType[] }>(`/api/warnings/types?guildId=${guildId}`),
+
+  // Warning Types CRUD
+  createType: (guildId: string, name: string, severity: number) =>
+    fetchApi<{ warningType: WarningType }>('/api/warnings/types', {
+      method: 'POST',
+      body: JSON.stringify({ guildId, name, severity }),
+    }),
+
+  updateType: (id: number, name: string, severity: number) =>
+    fetchApi<{ warningType: WarningType }>(`/api/warnings/types/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, severity }),
+    }),
+
+  deleteType: (id: number) =>
+    fetchApi<void>(`/api/warnings/types/${id}`, { method: 'DELETE' }),
+
+  // Issue Warning
+  issue: (guildId: string, playerId: string, warningTypeId: number, note?: string) =>
+    fetchApi<{ warning: Warning }>('/api/warnings', {
+      method: 'POST',
+      body: JSON.stringify({ guildId, playerId, warningTypeId, note }),
+    }),
 };
 
 // Violations API
@@ -95,8 +118,19 @@ export const violationsApi = {
     fetchApi<ViolationStats>(`/api/violations/stats/my?guildId=${guildId}&playerId=${playerId}`),
 };
 
+// Guild API
+export const guildApi = {
+  getMembers: (guildId: string) =>
+    fetchApi<{ members: GuildMember[] }>(`/api/guilds/${guildId}/members?format=dropdown`),
+};
+
 // Types
 export type MemberRole = 'Leader' | 'Officer' | 'Member';
+
+export interface GuildMember {
+  allyCode: string;
+  playerName: string;
+}
 
 export interface SessionPlayer {
   allyCode: string;
@@ -152,6 +186,8 @@ export interface WarningType {
 export interface Violation {
   guildId: string;
   playerId: string;
+  playerName?: string;
+  allyCode?: string;
   date: string;
   ticketCount: number;
 }
