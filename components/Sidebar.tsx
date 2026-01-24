@@ -54,6 +54,9 @@ export function Sidebar({ isOfficer }: SidebarProps) {
               <Link href="/dashboard/guild/violations" className={linkClasses('/dashboard/guild/violations')}>
                 Violations
               </Link>
+              <Link href="/dashboard/guild/warning-types" className={linkClasses('/dashboard/guild/warning-types')}>
+                Warning Types
+              </Link>
             </div>
           </div>
         )}
