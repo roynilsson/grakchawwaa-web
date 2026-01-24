@@ -5,6 +5,7 @@ import { warningsApi, Warning, WarningType } from '../../../../lib/api';
 import { useState, useEffect, useCallback } from 'react';
 import { Pagination } from '../../../../components/Pagination';
 import { Filters } from '../../../../components/Filters';
+import { IssueWarningModal } from '../../../../components/IssueWarningModal';
 import { useRouter } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 25;
@@ -18,6 +19,9 @@ export default function GuildWarnings() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Modal state
+  const [showIssueModal, setShowIssueModal] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -118,7 +122,15 @@ export default function GuildWarnings() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Guild Warnings</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Guild Warnings</h1>
+        <button
+          onClick={() => setShowIssueModal(true)}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+        >
+          Issue Warning
+        </button>
+      </div>
 
       <Filters
         onSearchChange={setSearch}
@@ -186,6 +198,15 @@ export default function GuildWarnings() {
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
+      />
+
+      <IssueWarningModal
+        isOpen={showIssueModal}
+        onClose={() => setShowIssueModal(false)}
+        guildId={selectedPlayer.guildId}
+        onSuccess={() => {
+          fetchWarnings();
+        }}
       />
     </div>
   );
