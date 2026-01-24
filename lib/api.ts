@@ -1,7 +1,7 @@
 // grakchawwaa-web/lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
     this.name = 'ApiError';
@@ -16,7 +16,7 @@ async function fetchApi<T>(
 
   const response = await fetch(url, {
     ...options,
-    credentials: 'include', // Important: send cookies
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -45,12 +45,63 @@ export const authApi = {
     }),
 };
 
+// Warnings API
+export const warningsApi = {
+  list: (params: {
+    guildId: string;
+    playerId?: string;
+    warningTypeId?: number;
+    page?: number;
+    limit?: number;
+    currentMembersOnly?: boolean;
+    daysAgo?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('guildId', params.guildId);
+    if (params.playerId) searchParams.set('playerId', params.playerId);
+    if (params.warningTypeId) searchParams.set('warningTypeId', String(params.warningTypeId));
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
+    if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
+    return fetchApi<WarningsResponse>(`/api/warnings?${searchParams}`);
+  },
+  getMyStats: (guildId: string, playerId: string) =>
+    fetchApi<WarningStats>(`/api/warnings/stats/my?guildId=${guildId}&playerId=${playerId}`),
+  getTypes: (guildId: string) =>
+    fetchApi<{ warningTypes: WarningType[] }>(`/api/warnings/types?guildId=${guildId}`),
+};
+
+// Violations API
+export const violationsApi = {
+  list: (params: {
+    guildId: string;
+    playerId?: string;
+    page?: number;
+    limit?: number;
+    currentMembersOnly?: boolean;
+    daysAgo?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('guildId', params.guildId);
+    if (params.playerId) searchParams.set('playerId', params.playerId);
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
+    if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
+    return fetchApi<ViolationsResponse>(`/api/violations?${searchParams}`);
+  },
+  getMyStats: (guildId: string, playerId: string) =>
+    fetchApi<ViolationStats>(`/api/violations/stats/my?guildId=${guildId}&playerId=${playerId}`),
+};
+
 // Types
 export type MemberRole = 'Leader' | 'Officer' | 'Member';
 
 export interface SessionPlayer {
   allyCode: string;
   playerName: string;
+  playerId: string;
   guildId: string;
   guildName: string;
   memberLevel: number;
@@ -71,4 +122,48 @@ export interface SessionData {
   selectedAllyCode?: string;
 }
 
-export { ApiError };
+export interface Warning {
+  id: number;
+  createdAt: string;
+  note?: string;
+  player: { allyCode: string; name?: string };
+  warningType: { id: number; name: string; severity: number };
+  issuedByPlayer?: { allyCode: string; name?: string };
+}
+
+export interface WarningsResponse {
+  warnings: Warning[];
+  count: number;
+  total: number;
+  page: number;
+}
+
+export interface WarningStats {
+  total: number;
+  last30Days: number;
+}
+
+export interface WarningType {
+  id: number;
+  name: string;
+  severity: number;
+}
+
+export interface Violation {
+  guildId: string;
+  playerId: string;
+  date: string;
+  ticketCount: number;
+}
+
+export interface ViolationsResponse {
+  violations: Violation[];
+  count: number;
+  total: number;
+  page: number;
+}
+
+export interface ViolationStats {
+  last30Days: number;
+  avgTickets: number;
+}
