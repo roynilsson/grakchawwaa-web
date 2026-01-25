@@ -124,7 +124,8 @@ export default function GuildViolations() {
                     {formatDate(violation.date)}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    {violation.playerId}
+                    <div>{violation.playerName || 'Unknown'}</div>
+                    <div className="text-xs text-gray-500">{violation.allyCode}</div>
                   </td>
                   <td className="px-4 py-3 text-sm">{violation.ticketCount}</td>
                   <td className="px-4 py-3 text-sm text-red-400">
