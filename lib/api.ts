@@ -124,6 +124,39 @@ export const guildApi = {
     fetchApi<{ members: GuildMember[] }>(`/api/guilds/${guildId}/members?format=dropdown`),
 };
 
+// Automations API
+export const automationsApi = {
+  getTypes: () => fetchApi<{ automationTypes: AutomationTypesRegistry }>('/api/automations/types'),
+  list: (guildId: string) =>
+    fetchApi<{ automations: Automation[] }>(`/api/automations?guildId=${guildId}`),
+  get: (id: number) => fetchApi<{ automation: Automation }>(`/api/automations/${id}`),
+  create: (data: {
+    guildId: string;
+    automationType: string;
+    interval?: string;
+    config?: Record<string, unknown>;
+    enabled?: boolean;
+  }) =>
+    fetchApi<{ automation: Automation }>('/api/automations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (
+    id: number,
+    data: {
+      interval?: string;
+      config?: Record<string, unknown>;
+      enabled?: boolean;
+    }
+  ) =>
+    fetchApi<{ automation: Automation }>(`/api/automations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id: number) =>
+    fetchApi<void>(`/api/automations/${id}`, { method: 'DELETE' }),
+};
+
 // Types
 export type MemberRole = 'Leader' | 'Officer' | 'Member';
 
@@ -202,4 +235,30 @@ export interface ViolationsResponse {
 export interface ViolationStats {
   last30Days: number;
   avgTickets: number;
+}
+
+// Automation types
+export interface AutomationTypeConfig {
+  name: string;
+  category: string;
+  triggerType: 'calendar' | 'event';
+  intervals: readonly string[];
+  config: {
+    hasThresholds: boolean;
+    thresholdLabel?: string;
+  };
+}
+
+export type AutomationTypesRegistry = Record<string, AutomationTypeConfig>;
+
+export interface Automation {
+  id: number;
+  automationType: string;
+  interval?: string;
+  nextRunAt?: string;
+  lastRunAt?: string;
+  config: Record<string, unknown>;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
