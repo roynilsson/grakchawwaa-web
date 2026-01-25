@@ -204,6 +204,7 @@ export default function GuildWarnings() {
         isOpen={showIssueModal}
         onClose={() => setShowIssueModal(false)}
         guildId={selectedPlayer.guildId}
+        issuedByAllyCode={selectedPlayer.allyCode}
         onSuccess={() => {
           fetchWarnings();
         }}

@@ -8,6 +8,7 @@ interface IssueWarningModalProps {
   isOpen: boolean;
   onClose: () => void;
   guildId: string;
+  issuedByAllyCode: string;
   onSuccess: () => void;
 }
 
@@ -15,6 +16,7 @@ export function IssueWarningModal({
   isOpen,
   onClose,
   guildId,
+  issuedByAllyCode,
   onSuccess,
 }: IssueWarningModalProps) {
   const [members, setMembers] = useState<GuildMember[]>([]);
@@ -88,7 +90,8 @@ export function IssueWarningModal({
         guildId,
         selectedAllyCode,
         selectedWarningTypeId,
-        note.trim() || undefined
+        note.trim() || undefined,
+        issuedByAllyCode
       );
       const playerName = selectedMember?.playerName || selectedAllyCode;
       toast.success(`Warning issued to ${playerName}`);

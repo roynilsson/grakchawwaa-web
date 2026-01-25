@@ -88,10 +88,10 @@ export const warningsApi = {
     fetchApi<void>(`/api/warnings/types/${id}`, { method: 'DELETE' }),
 
   // Issue Warning
-  issue: (guildId: string, playerId: string, warningTypeId: number, note?: string) =>
+  issue: (guildId: string, playerId: string, warningTypeId: number, note?: string, issuedBy?: string) =>
     fetchApi<{ warning: Warning }>('/api/warnings', {
       method: 'POST',
-      body: JSON.stringify({ guildId, playerId, warningTypeId, note }),
+      body: JSON.stringify({ guildId, playerId, warningTypeId, note, issuedBy }),
     }),
 };
 
