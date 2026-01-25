@@ -71,7 +71,7 @@ export default function MyViolations() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">My Violations</h1>
+      <h1 className="text-2xl font-bold mb-6">My Ticket Violations</h1>
 
       {/* Stats Cards */}
       {stats && (
