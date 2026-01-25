@@ -4,9 +4,11 @@ import { useAuth } from '../../../../lib/auth-context';
 import {
   automationsApi,
   warningsApi,
+  guildApi,
   Automation,
   AutomationTypesRegistry,
   WarningType,
+  GuildChannel,
 } from '../../../../lib/api';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -24,7 +26,7 @@ interface FormData {
   interval: string;
   enabled: boolean;
   thresholds: ThresholdConfig[];
-  channelId: string;
+  guildChannelId: number | null;
 }
 
 const INTERVAL_LABELS: Record<string, string> = {
@@ -50,6 +52,7 @@ export default function AutomationsPage() {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [automationTypes, setAutomationTypes] = useState<AutomationTypesRegistry>({});
   const [warningTypes, setWarningTypes] = useState<WarningType[]>([]);
+  const [guildChannels, setGuildChannels] = useState<GuildChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<FormMode>('none');
@@ -59,7 +62,7 @@ export default function AutomationsPage() {
     interval: 'weekly',
     enabled: true,
     thresholds: [{ threshold: 600, warningTypeId: 0 }],
-    channelId: '',
+    guildChannelId: null,
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -81,14 +84,16 @@ export default function AutomationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [automationsRes, typesRes, warningTypesRes] = await Promise.all([
+      const [automationsRes, typesRes, warningTypesRes, channelsRes] = await Promise.all([
         automationsApi.list(selectedPlayer.guildId),
         automationsApi.getTypes(),
         warningsApi.getTypes(selectedPlayer.guildId),
+        guildApi.getChannels(selectedPlayer.guildId),
       ]);
       setAutomations(automationsRes.automations);
       setAutomationTypes(typesRes.automationTypes);
       setWarningTypes(warningTypesRes.warningTypes);
+      setGuildChannels(channelsRes.channels);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -138,12 +143,12 @@ export default function AutomationsPage() {
       interval: typeConfig?.intervals[0] || 'weekly',
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
-      channelId: '',
+      guildChannelId: null,
     });
   };
 
   const handleEditClick = (automation: Automation) => {
-    const config = automation.config as { thresholds?: ThresholdConfig[]; channelId?: string };
+    const config = automation.config as { thresholds?: ThresholdConfig[]; guildChannelId?: number };
     setFormMode('edit');
     setEditingId(automation.id);
     setFormData({
@@ -153,7 +158,7 @@ export default function AutomationsPage() {
       thresholds: config.thresholds || [
         { threshold: 600, warningTypeId: warningTypes[0]?.id || 0 },
       ],
-      channelId: config.channelId || '',
+      guildChannelId: config.guildChannelId ?? null,
     });
   };
 
@@ -165,7 +170,7 @@ export default function AutomationsPage() {
       interval: 'weekly',
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
-      channelId: '',
+      guildChannelId: null,
     });
   };
 
@@ -179,6 +184,13 @@ export default function AutomationsPage() {
       return;
     }
 
+    // Validate channel selection when required
+    const typeConfig = automationTypes[formData.automationType];
+    if (typeConfig?.config?.hasChannelId && !formData.guildChannelId) {
+      toast.error('Please select a Discord channel');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const typeConfig = automationTypes[formData.automationType];
@@ -189,9 +201,9 @@ export default function AutomationsPage() {
         config.thresholds = formData.thresholds;
       }
 
-      // Add channelId if the type supports it
+      // Add guildChannelId if the type supports it
       if (typeConfig?.config?.hasChannelId) {
-        config.channelId = formData.channelId || null;
+        config.guildChannelId = formData.guildChannelId;
       }
 
       if (formMode === 'add') {
@@ -471,25 +483,37 @@ export default function AutomationsPage() {
               </div>
             )}
 
-            {/* Channel ID (for notification types) */}
+            {/* Channel (for notification types) */}
             {automationTypes[formData.automationType]?.config?.hasChannelId && (
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Discord Channel ID
+                  Discord Channel
                 </label>
-                <input
-                  type="text"
-                  value={formData.channelId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, channelId: e.target.value })
-                  }
-                  placeholder="Enter Discord channel ID (e.g., 1234567890123456789)"
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
-                />
+                {guildChannels.length === 0 ? (
+                  <div className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-yellow-500 text-sm">
+                    No channels registered. Use /register-channel in Discord first.
+                  </div>
+                ) : (
+                  <select
+                    value={formData.guildChannelId ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        guildChannelId: e.target.value ? Number(e.target.value) : null
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select a channel...</option>
+                    {guildChannels.map((channel) => (
+                      <option key={channel.id} value={channel.id}>
+                        #{channel.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <p className="mt-1 text-xs text-gray-500">
-                  The Discord channel where notifications will be sent. You can get
-                  this by right-clicking a channel in Discord and selecting &quot;Copy Channel ID&quot;
-                  (requires Developer Mode enabled in Discord settings).
+                  Channels are registered via Discord commands. Use /register-channel to add channels.
                 </p>
               </div>
             )}
@@ -577,7 +601,9 @@ export default function AutomationsPage() {
                       )}
                       {automationTypes[automation.automationType]?.config?.hasChannelId && (
                         <div className="text-xs text-gray-500 mt-1">
-                          Channel: {(automation.config as { channelId?: string })?.channelId || (
+                          Channel: {automation.resolvedChannel ? (
+                            `#${automation.resolvedChannel.name}`
+                          ) : (
                             <span className="text-yellow-500">Not configured</span>
                           )}
                         </div>

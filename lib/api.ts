@@ -122,6 +122,8 @@ export const violationsApi = {
 export const guildApi = {
   getMembers: (guildId: string) =>
     fetchApi<{ members: GuildMember[] }>(`/api/guilds/${guildId}/members?format=dropdown`),
+  getChannels: (guildId: string) =>
+    fetchApi<{ channels: GuildChannel[] }>(`/api/guilds/${guildId}/channels`),
 };
 
 // Automations API
@@ -159,6 +161,12 @@ export const automationsApi = {
 
 // Types
 export type MemberRole = 'Leader' | 'Officer' | 'Member';
+
+export interface GuildChannel {
+  id: number;
+  discordChannelId: string;
+  name: string;
+}
 
 export interface GuildMember {
   allyCode: string;
@@ -254,6 +262,12 @@ export interface AutomationTypeConfig {
 
 export type AutomationTypesRegistry = Record<string, AutomationTypeConfig>;
 
+export interface ResolvedChannel {
+  id: number;
+  discordChannelId: string;
+  name: string;
+}
+
 export interface Automation {
   id: number;
   automationType: string;
@@ -263,6 +277,7 @@ export interface Automation {
   nextRunAt?: string;
   lastRunAt?: string;
   config: Record<string, unknown>;
+  resolvedChannel?: ResolvedChannel;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
