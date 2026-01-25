@@ -241,11 +241,14 @@ export interface ViolationStats {
 export interface AutomationTypeConfig {
   name: string;
   category: string;
-  triggerType: 'calendar' | 'event';
+  scope: 'system' | 'guild';
+  processedBy: 'backend' | 'bot';
+  triggerType: 'calendar' | 'interval' | 'event';
   intervals: readonly string[];
   config: {
     hasThresholds: boolean;
     thresholdLabel?: string;
+    hasChannelId?: boolean;
   };
 }
 
@@ -254,6 +257,8 @@ export type AutomationTypesRegistry = Record<string, AutomationTypeConfig>;
 export interface Automation {
   id: number;
   automationType: string;
+  scope: 'system' | 'guild';
+  processedBy: 'backend' | 'bot';
   interval?: string;
   nextRunAt?: string;
   lastRunAt?: string;

@@ -24,12 +24,24 @@ interface FormData {
   interval: string;
   enabled: boolean;
   thresholds: ThresholdConfig[];
+  channelId: string;
 }
 
 const INTERVAL_LABELS: Record<string, string> = {
   daily: 'Daily',
   weekly: 'Weekly (Mon-Sun)',
   monthly: 'Monthly',
+};
+
+const TRIGGER_DESCRIPTIONS: Record<string, string> = {
+  interval: 'Runs periodically',
+  event: 'Triggered by system',
+  calendar: 'Scheduled',
+};
+
+const PROCESSED_BY_LABELS: Record<string, string> = {
+  backend: 'Server',
+  bot: 'Discord Bot',
 };
 
 export default function AutomationsPage() {
@@ -47,6 +59,7 @@ export default function AutomationsPage() {
     interval: 'weekly',
     enabled: true,
     thresholds: [{ threshold: 600, warningTypeId: 0 }],
+    channelId: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -125,11 +138,12 @@ export default function AutomationsPage() {
       interval: typeConfig?.intervals[0] || 'weekly',
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
+      channelId: '',
     });
   };
 
   const handleEditClick = (automation: Automation) => {
-    const config = automation.config as { thresholds?: ThresholdConfig[] };
+    const config = automation.config as { thresholds?: ThresholdConfig[]; channelId?: string };
     setFormMode('edit');
     setEditingId(automation.id);
     setFormData({
@@ -139,6 +153,7 @@ export default function AutomationsPage() {
       thresholds: config.thresholds || [
         { threshold: 600, warningTypeId: warningTypes[0]?.id || 0 },
       ],
+      channelId: config.channelId || '',
     });
   };
 
@@ -150,6 +165,7 @@ export default function AutomationsPage() {
       interval: 'weekly',
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
+      channelId: '',
     });
   };
 
@@ -165,7 +181,18 @@ export default function AutomationsPage() {
 
     setSubmitting(true);
     try {
-      const config = { thresholds: formData.thresholds };
+      const typeConfig = automationTypes[formData.automationType];
+      const config: Record<string, unknown> = {};
+
+      // Add thresholds if the type supports them
+      if (typeConfig?.config?.hasThresholds) {
+        config.thresholds = formData.thresholds;
+      }
+
+      // Add channelId if the type supports it
+      if (typeConfig?.config?.hasChannelId) {
+        config.channelId = formData.channelId || null;
+      }
 
       if (formMode === 'add') {
         await automationsApi.create({
@@ -330,31 +357,28 @@ export default function AutomationsPage() {
               </div>
             )}
 
-            {/* Interval */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
-                Schedule
-              </label>
-              <select
-                value={formData.interval}
-                onChange={(e) =>
-                  setFormData({ ...formData, interval: e.target.value })
-                }
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
-              >
-                {(
-                  automationTypes[formData.automationType]?.intervals || [
-                    'daily',
-                    'weekly',
-                    'monthly',
-                  ]
-                ).map((interval) => (
-                  <option key={interval} value={interval}>
-                    {INTERVAL_LABELS[interval] || interval}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Interval (only for calendar-triggered automations) */}
+            {automationTypes[formData.automationType]?.triggerType === 'calendar' &&
+              (automationTypes[formData.automationType]?.intervals?.length ?? 0) > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Schedule
+                </label>
+                <select
+                  value={formData.interval}
+                  onChange={(e) =>
+                    setFormData({ ...formData, interval: e.target.value })
+                  }
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                >
+                  {automationTypes[formData.automationType]?.intervals.map((interval) => (
+                    <option key={interval} value={interval}>
+                      {INTERVAL_LABELS[interval] || interval}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Enabled */}
             <div className="flex items-center gap-2">
@@ -447,6 +471,29 @@ export default function AutomationsPage() {
               </div>
             )}
 
+            {/* Channel ID (for notification types) */}
+            {automationTypes[formData.automationType]?.config?.hasChannelId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Discord Channel ID
+                </label>
+                <input
+                  type="text"
+                  value={formData.channelId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, channelId: e.target.value })
+                  }
+                  placeholder="Enter Discord channel ID (e.g., 1234567890123456789)"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  The Discord channel where notifications will be sent. You can get
+                  this by right-clicking a channel in Discord and selecting &quot;Copy Channel ID&quot;
+                  (requires Developer Mode enabled in Discord settings).
+                </p>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex items-center gap-2 pt-2">
               <button
@@ -479,6 +526,9 @@ export default function AutomationsPage() {
                 Schedule
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold">
+                Processor
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">
                 Status
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold">
@@ -495,7 +545,7 @@ export default function AutomationsPage() {
           <tbody className="divide-y divide-gray-700">
             {automations.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                   No automations configured. Click &quot;Add Automation&quot; to
                   create one.
                 </td>
@@ -507,6 +557,9 @@ export default function AutomationsPage() {
                     <div>
                       <div className="font-medium">
                         {getTypeName(automation.automationType)}
+                        {automation.scope === 'system' && (
+                          <span className="ml-2 text-xs text-gray-500">(System)</span>
+                        )}
                       </div>
                       {(
                         automation.config as { thresholds?: ThresholdConfig[] }
@@ -522,12 +575,32 @@ export default function AutomationsPage() {
                           ))}
                         </div>
                       )}
+                      {automationTypes[automation.automationType]?.config?.hasChannelId && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Channel: {(automation.config as { channelId?: string })?.channelId || (
+                            <span className="text-yellow-500">Not configured</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    {INTERVAL_LABELS[automation.interval || ''] ||
-                      automation.interval ||
-                      '-'}
+                    {(() => {
+                      const typeConfig = automationTypes[automation.automationType];
+                      if (typeConfig?.triggerType === 'calendar' && automation.interval) {
+                        return INTERVAL_LABELS[automation.interval] || automation.interval;
+                      }
+                      return TRIGGER_DESCRIPTIONS[typeConfig?.triggerType || ''] || '-';
+                    })()}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-0.5 text-xs rounded ${
+                      automation.processedBy === 'bot'
+                        ? 'bg-purple-600/30 text-purple-300'
+                        : 'bg-blue-600/30 text-blue-300'
+                    }`}>
+                      {PROCESSED_BY_LABELS[automation.processedBy] || automation.processedBy}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <button
@@ -577,13 +650,15 @@ export default function AutomationsPage() {
                         >
                           Edit
                         </button>
-                        <button
-                          onClick={() => handleDeleteClick(automation.id)}
-                          disabled={formMode !== 'none'}
-                          className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors text-sm"
-                        >
-                          Delete
-                        </button>
+                        {automation.scope !== 'system' && (
+                          <button
+                            onClick={() => handleDeleteClick(automation.id)}
+                            disabled={formMode !== 'none'}
+                            className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors text-sm"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>
