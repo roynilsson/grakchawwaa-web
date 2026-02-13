@@ -122,6 +122,8 @@ export const violationsApi = {
 export const guildApi = {
   getMembers: (guildId: string) =>
     fetchApi<{ members: GuildMember[] }>(`/api/guilds/${guildId}/members?format=dropdown`),
+  getMembersDetailed: (guildId: string, includeInactive: boolean = false) =>
+    fetchApi<{ members: GuildMemberDetailed[] }>(`/api/guilds/${guildId}/members${includeInactive ? '?includeInactive=true' : ''}`),
   getChannels: (guildId: string) =>
     fetchApi<{ channels: GuildChannel[] }>(`/api/guilds/${guildId}/channels`),
 };
@@ -171,6 +173,21 @@ export interface GuildChannel {
 export interface GuildMember {
   allyCode: string;
   playerName: string;
+}
+
+export interface GuildMemberDetailed {
+  joinedAt: string;
+  leftAt?: string;
+  isActive: boolean;
+  memberLevel?: number;
+  player: {
+    allyCode: string;
+    name?: string;
+    playerId?: string;
+    playerLevel?: number;
+    galacticPower?: number | string; // BigInt from DB can be serialized as string
+    lastActivityTime?: string;
+  };
 }
 
 export interface SessionPlayer {
