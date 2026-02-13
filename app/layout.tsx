@@ -6,6 +6,11 @@ import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "Grakchawwaa - Guild Management",
   description: "SWGOH guild management system",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default function RootLayout({

@@ -48,7 +48,7 @@ export default function Home() {
 
         <div className="space-y-4">
           <p className="text-gray-400">
-            Track violations, manage warnings, and monitor your guild's performance.
+            Track violations, manage warnings, and monitor your guild&apos;s performance.
           </p>
 
           <a

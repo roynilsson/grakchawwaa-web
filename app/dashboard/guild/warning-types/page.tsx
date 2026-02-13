@@ -240,7 +240,8 @@ export default function WarningTypesPage() {
 
       {/* Warning Types Table */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full">
           <thead className="bg-gray-700">
             <tr>
               <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
@@ -367,6 +368,7 @@ export default function WarningTypesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

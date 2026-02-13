@@ -14,6 +14,7 @@ export default function DashboardLayout({
   const { session, loading, logout, selectPlayer } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -101,26 +102,44 @@ export default function DashboardLayout({
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Grakchawwaa</h1>
-              <p className="text-sm text-gray-400 mt-1">
-                Guild Management Dashboard
-              </p>
+          <div className="flex items-center justify-between gap-4">
+            {/* Left side: Hamburger + Title */}
+            <div className="flex items-center gap-4 min-w-0">
+              {/* Hamburger menu button */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden text-gray-400 hover:text-white"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold truncate">Grakchawwaa</h1>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1 hidden sm:block">
+                  Guild Management Dashboard
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
+
+            {/* Right side: User controls */}
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
               {/* Player Switcher Dropdown */}
               {session.players.length > 1 ? (
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     disabled={switching}
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded transition-colors text-sm"
                   >
-                    <span className="text-sm text-gray-400">Player:</span>
-                    <span className="font-semibold">{selectedPlayer.playerName}</span>
+                    <span className="text-xs sm:text-sm text-gray-400 hidden md:inline">Player:</span>
+                    <span className="font-semibold text-sm sm:text-base truncate max-w-[100px] sm:max-w-none">
+                      {selectedPlayer.playerName}
+                    </span>
                     <svg
-                      className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 transition-transform flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -141,11 +160,11 @@ export default function DashboardLayout({
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <div>
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold">{player.playerName}</span>
+                                  <span className="font-semibold truncate">{player.playerName}</span>
                                   {player.isMain && (
-                                    <span className="px-1.5 py-0.5 bg-indigo-600 text-xs font-semibold rounded">
+                                    <span className="px-1.5 py-0.5 bg-indigo-600 text-xs font-semibold rounded flex-shrink-0">
                                       MAIN
                                     </span>
                                   )}
@@ -153,7 +172,7 @@ export default function DashboardLayout({
                                 <p className="text-sm text-gray-400">{player.allyCode}</p>
                               </div>
                               {player.allyCode === session.selectedAllyCode && (
-                                <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
                               )}
@@ -165,20 +184,25 @@ export default function DashboardLayout({
                   )}
                 </div>
               ) : (
-                <div className="text-right">
-                  <p className="text-sm text-gray-400">Player</p>
-                  <p className="font-semibold">{selectedPlayer.playerName}</p>
+                <div className="text-right hidden sm:block">
+                  <p className="text-xs sm:text-sm text-gray-400">Player</p>
+                  <p className="font-semibold text-sm sm:text-base">{selectedPlayer.playerName}</p>
                 </div>
               )}
-              <div className="text-right">
-                <p className="text-sm text-gray-400">Logged in as</p>
-                <p className="font-semibold">{session.discordUsername}</p>
+
+              {/* Username - hidden on mobile */}
+              <div className="text-right hidden md:block">
+                <p className="text-xs sm:text-sm text-gray-400">Logged in as</p>
+                <p className="font-semibold text-sm sm:text-base truncate max-w-[150px]">{session.discordUsername}</p>
               </div>
+
+              {/* Logout button */}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                className="px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors text-sm sm:text-base"
               >
-                Logout
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
               </button>
             </div>
           </div>
@@ -187,8 +211,8 @@ export default function DashboardLayout({
 
       {/* Main Content with Sidebar */}
       <div className="flex">
-        <Sidebar isOfficer={isOfficer} />
-        <main className="flex-1 p-8">
+        <Sidebar isOfficer={isOfficer} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
           {children}
         </main>
       </div>
