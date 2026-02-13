@@ -68,6 +68,9 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
                 <Link href="/dashboard/guild/members" className={linkClasses('/dashboard/guild/members')} onClick={onClose}>
                   Members
                 </Link>
+                <Link href="/dashboard/raids" className={linkClasses('/dashboard/raids')} onClick={onClose}>
+                  Raids
+                </Link>
               </div>
             </div>
 
@@ -81,6 +84,9 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
                 </Link>
                 <Link href="/dashboard/violations" className={linkClasses('/dashboard/violations')} onClick={onClose}>
                   Ticket Violations
+                </Link>
+                <Link href="/dashboard/settings" className={linkClasses('/dashboard/settings')} onClick={onClose}>
+                  Settings
                 </Link>
               </div>
             </div>
@@ -99,6 +105,9 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
                   </Link>
                   <Link href="/dashboard/guild/warning-types" className={linkClasses('/dashboard/guild/warning-types')} onClick={onClose}>
                     Warning Types
+                  </Link>
+                  <Link href="/dashboard/guild/raid-config" className={linkClasses('/dashboard/guild/raid-config')} onClick={onClose}>
+                    Raid Configuration
                   </Link>
                   <Link href="/dashboard/guild/automations" className={linkClasses('/dashboard/guild/automations')} onClick={onClose}>
                     Automations

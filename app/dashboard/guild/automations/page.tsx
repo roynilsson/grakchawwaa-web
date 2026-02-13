@@ -9,6 +9,7 @@ import {
   AutomationTypesRegistry,
   WarningType,
   GuildChannel,
+  GuildMemberDetailed,
 } from '../../../../lib/api';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -27,6 +28,8 @@ interface FormData {
   enabled: boolean;
   thresholds: ThresholdConfig[];
   guildChannelId: number | null;
+  playerId: string | null;
+  reminderHours: number[];
 }
 
 const INTERVAL_LABELS: Record<string, string> = {
@@ -53,6 +56,7 @@ export default function AutomationsPage() {
   const [automationTypes, setAutomationTypes] = useState<AutomationTypesRegistry>({});
   const [warningTypes, setWarningTypes] = useState<WarningType[]>([]);
   const [guildChannels, setGuildChannels] = useState<GuildChannel[]>([]);
+  const [guildMembers, setGuildMembers] = useState<GuildMemberDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<FormMode>('none');
@@ -63,6 +67,8 @@ export default function AutomationsPage() {
     enabled: true,
     thresholds: [{ threshold: 600, warningTypeId: 0 }],
     guildChannelId: null,
+    playerId: null,
+    reminderHours: [24, 6],
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -84,16 +90,18 @@ export default function AutomationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [automationsRes, typesRes, warningTypesRes, channelsRes] = await Promise.all([
+      const [automationsRes, typesRes, warningTypesRes, channelsRes, membersRes] = await Promise.all([
         automationsApi.list(selectedPlayer.guildId),
         automationsApi.getTypes(),
         warningsApi.getTypes(selectedPlayer.guildId),
         guildApi.getChannels(selectedPlayer.guildId),
+        guildApi.getMembersDetailed(selectedPlayer.guildId, false, true), // only active members with API keys
       ]);
       setAutomations(automationsRes.automations);
       setAutomationTypes(typesRes.automationTypes);
       setWarningTypes(warningTypesRes.warningTypes);
       setGuildChannels(channelsRes.channels);
+      setGuildMembers(membersRes.members);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -144,11 +152,18 @@ export default function AutomationsPage() {
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
       guildChannelId: null,
+      playerId: null,
+      reminderHours: [24, 6],
     });
   };
 
   const handleEditClick = (automation: Automation) => {
-    const config = automation.config as { thresholds?: ThresholdConfig[]; guildChannelId?: number };
+    const config = automation.config as {
+      thresholds?: ThresholdConfig[];
+      guildChannelId?: number;
+      playerId?: string;
+      reminderHours?: number[];
+    };
     setFormMode('edit');
     setEditingId(automation.id);
     setFormData({
@@ -159,6 +174,8 @@ export default function AutomationsPage() {
         { threshold: 600, warningTypeId: warningTypes[0]?.id || 0 },
       ],
       guildChannelId: config.guildChannelId ?? null,
+      playerId: config.playerId ?? null,
+      reminderHours: config.reminderHours ?? [24, 6],
     });
   };
 
@@ -171,6 +188,8 @@ export default function AutomationsPage() {
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
       guildChannelId: null,
+      playerId: null,
+      reminderHours: [24, 6],
     });
   };
 
@@ -191,6 +210,12 @@ export default function AutomationsPage() {
       return;
     }
 
+    // Validate player selection when required
+    if (typeConfig?.config?.hasPlayerSelector && !formData.playerId) {
+      toast.error('Please select a player with API key');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const typeConfig = automationTypes[formData.automationType];
@@ -204,6 +229,16 @@ export default function AutomationsPage() {
       // Add guildChannelId if the type supports it
       if (typeConfig?.config?.hasChannelId) {
         config.guildChannelId = formData.guildChannelId;
+      }
+
+      // Add playerId if the type supports it
+      if (typeConfig?.config?.hasPlayerSelector) {
+        config.playerId = formData.playerId;
+      }
+
+      // Add reminderHours if the type supports it
+      if (typeConfig?.config?.hasReminderHours) {
+        config.reminderHours = formData.reminderHours;
       }
 
       if (formMode === 'add') {
@@ -518,6 +553,96 @@ export default function AutomationsPage() {
               </div>
             )}
 
+            {/* Player Selector (for raid collection) */}
+            {automationTypes[formData.automationType]?.config?.hasPlayerSelector && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Player (with API Key)
+                </label>
+                {guildMembers.length === 0 ? (
+                  <div className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-yellow-500 text-sm">
+                    No players with API keys found. Go to Settings to configure your Mhann API key.
+                  </div>
+                ) : (
+                  <select
+                    value={formData.playerId ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        playerId: e.target.value || null
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select a player...</option>
+                    {guildMembers.map((member) => (
+                      <option key={member.player.playerId} value={member.player.playerId}>
+                        {member.player.name || member.player.allyCode} ({member.player.allyCode})
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  The selected player&apos;s Mhann API credentials will be used to collect raid data.
+                </p>
+              </div>
+            )}
+
+            {/* Reminder Hours (for raid collection) */}
+            {automationTypes[formData.automationType]?.config?.hasReminderHours && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Reminder Times (hours before raid expires)
+                </label>
+                <div className="space-y-2">
+                  {formData.reminderHours.map((hours, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={hours}
+                        onChange={(e) => {
+                          const newHours = [...formData.reminderHours];
+                          newHours[index] = Number(e.target.value);
+                          setFormData({ ...formData, reminderHours: newHours });
+                        }}
+                        min={1}
+                        max={48}
+                        className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                      />
+                      <span className="text-gray-400 text-sm">hours before expiry</span>
+                      {formData.reminderHours.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newHours = formData.reminderHours.filter((_, i) => i !== index);
+                            setFormData({ ...formData, reminderHours: newHours });
+                          }}
+                          className="text-red-400 hover:text-red-300 text-sm px-2"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        reminderHours: [...formData.reminderHours, 12]
+                      });
+                    }}
+                    className="text-sm text-indigo-400 hover:text-indigo-300"
+                  >
+                    + Add Reminder Time
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  The system will check raid status at these times before expiry, plus once daily at midnight and after raid completion.
+                </p>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex items-center gap-2 pt-2">
               <button
@@ -607,6 +732,31 @@ export default function AutomationsPage() {
                           ) : (
                             <span className="text-yellow-500">Not configured</span>
                           )}
+                        </div>
+                      )}
+                      {automationTypes[automation.automationType]?.config?.hasPlayerSelector && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Player: {(() => {
+                            const config = automation.config as { playerId?: string };
+                            const member = guildMembers.find(m => m.player.playerId === config.playerId);
+                            return member ? (
+                              `${member.player.name || member.player.allyCode}`
+                            ) : (
+                              <span className="text-yellow-500">Not configured</span>
+                            );
+                          })()}
+                        </div>
+                      )}
+                      {automationTypes[automation.automationType]?.config?.hasReminderHours && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Reminders: {(() => {
+                            const config = automation.config as { reminderHours?: number[] };
+                            return config.reminderHours ? (
+                              config.reminderHours.sort((a, b) => b - a).map(h => `${h}h`).join(', ')
+                            ) : (
+                              <span className="text-yellow-500">Not configured</span>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>

@@ -122,8 +122,13 @@ export const violationsApi = {
 export const guildApi = {
   getMembers: (guildId: string) =>
     fetchApi<{ members: GuildMember[] }>(`/api/guilds/${guildId}/members?format=dropdown`),
-  getMembersDetailed: (guildId: string, includeInactive: boolean = false) =>
-    fetchApi<{ members: GuildMemberDetailed[] }>(`/api/guilds/${guildId}/members${includeInactive ? '?includeInactive=true' : ''}`),
+  getMembersDetailed: (guildId: string, includeInactive: boolean = false, withApiKey: boolean = false) => {
+    const params = new URLSearchParams();
+    if (includeInactive) params.set('includeInactive', 'true');
+    if (withApiKey) params.set('withApiKey', 'true');
+    const query = params.toString();
+    return fetchApi<{ members: GuildMemberDetailed[] }>(`/api/guilds/${guildId}/members${query ? `?${query}` : ''}`);
+  },
   getChannels: (guildId: string) =>
     fetchApi<{ channels: GuildChannel[] }>(`/api/guilds/${guildId}/channels`),
 };
@@ -159,6 +164,51 @@ export const automationsApi = {
     }),
   delete: (id: number) =>
     fetchApi<void>(`/api/automations/${id}`, { method: 'DELETE' }),
+};
+
+// Players API
+export const playersApi = {
+  update: (allyCode: string, data: {
+    name?: string;
+    playerId?: string;
+    discordId?: string;
+    isMain?: boolean;
+    mhannApiKey?: string;
+  }) =>
+    fetchApi<{ player: Player }>(`/api/players/${allyCode}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Raids API
+export const raidsApi = {
+  getActive: (guildId: string) =>
+    fetchApi<ActiveRaidResponse>(`/api/guilds/${guildId}/raids/active`),
+  getHistory: (guildId: string, params?: { raidType?: string; limit?: number; offset?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.raidType) searchParams.set('raidType', params.raidType);
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    const query = searchParams.toString();
+    return fetchApi<RaidHistoryResponse>(`/api/guilds/${guildId}/raids/history${query ? `?${query}` : ''}`);
+  },
+  updateGuildConfig: (guildId: string, raidType: string, guildMinScore: number) =>
+    fetchApi<{ config: { guildId: string; raidType: string; guildMinScore: number } }>(
+      `/api/guilds/${guildId}/raids/${raidType}/config`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ guildMinScore }),
+      }
+    ),
+  updatePlayerConfig: (guildId: string, raidType: string, allyCode: string, playerMinScore: number) =>
+    fetchApi<{ config: { allyCode: string; raidType: string; playerMinScore: number; allTimeHigh: number } }>(
+      `/api/guilds/${guildId}/raids/${raidType}/players/${allyCode}/config`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ playerMinScore }),
+      }
+    ),
 };
 
 // Types
@@ -274,6 +324,8 @@ export interface AutomationTypeConfig {
     hasThresholds: boolean;
     thresholdLabel?: string;
     hasChannelId?: boolean;
+    hasPlayerSelector?: boolean;
+    hasReminderHours?: boolean;
   };
 }
 
@@ -298,4 +350,58 @@ export interface Automation {
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Player {
+  allyCode: string;
+  discordId?: string;
+  playerId?: string;
+  name?: string;
+  isMain: boolean;
+  playerLevel?: number;
+  galacticPower?: number | string;
+  lastActivityTime?: string;
+  mhannApiKey?: string;
+  registeredAt: string;
+}
+
+export interface RaidResult {
+  player: { allyCode: string; name?: string };
+  score: number;
+  rank: number;
+}
+
+export interface PlayerRaidConfig {
+  player: { allyCode: string; name?: string };
+  playerMinScore?: number;
+  allTimeHigh: number;
+}
+
+export interface ActiveRaidResponse {
+  raid: {
+    id: number;
+    raidType: string;
+    expireTime: string;
+    startTime: string;
+    guildRewardScore: number;
+    isFinalized: boolean;
+  } | null;
+  results: RaidResult[];
+  guildConfig?: {
+    guildMinScore: number;
+  };
+  playerConfigs: PlayerRaidConfig[];
+}
+
+export interface RaidHistoryResponse {
+  raids: Array<{
+    id: number;
+    raidType: string;
+    expireTime: string;
+    startTime: string;
+    guildRewardScore: number;
+    isFinalized: boolean;
+    results: RaidResult[];
+  }>;
+  total: number;
 }
