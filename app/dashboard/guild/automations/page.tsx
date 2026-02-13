@@ -178,14 +178,14 @@ export default function AutomationsPage() {
     e.preventDefault();
     if (!selectedPlayer) return;
 
-    // Validate thresholds
-    if (formData.thresholds.some((t) => t.warningTypeId === 0)) {
+    // Validate thresholds (only if this automation type supports them)
+    const typeConfig = automationTypes[formData.automationType];
+    if (typeConfig?.config?.hasThresholds && formData.thresholds.some((t) => t.warningTypeId === 0)) {
       toast.error('Please select a warning type for each threshold');
       return;
     }
 
     // Validate channel selection when required
-    const typeConfig = automationTypes[formData.automationType];
     if (typeConfig?.config?.hasChannelId && !formData.guildChannelId) {
       toast.error('Please select a Discord channel');
       return;
