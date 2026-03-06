@@ -55,6 +55,7 @@ export const warningsApi = {
     limit?: number;
     currentMembersOnly?: boolean;
     daysAgo?: number;
+    search?: string;
   }) => {
     const searchParams = new URLSearchParams();
     searchParams.set('guildId', params.guildId);
@@ -64,6 +65,7 @@ export const warningsApi = {
     if (params.limit) searchParams.set('limit', String(params.limit));
     if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
+    if (params.search) searchParams.set('search', params.search);
     return fetchApi<WarningsResponse>(`/api/warnings?${searchParams}`);
   },
   getMyStats: (guildId: string, playerId: string) =>
@@ -104,6 +106,7 @@ export const violationsApi = {
     limit?: number;
     currentMembersOnly?: boolean;
     daysAgo?: number;
+    search?: string;
   }) => {
     const searchParams = new URLSearchParams();
     searchParams.set('guildId', params.guildId);
@@ -112,6 +115,7 @@ export const violationsApi = {
     if (params.limit) searchParams.set('limit', String(params.limit));
     if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
+    if (params.search) searchParams.set('search', params.search);
     return fetchApi<ViolationsResponse>(`/api/violations?${searchParams}`);
   },
   getMyStats: (guildId: string, playerId: string) =>

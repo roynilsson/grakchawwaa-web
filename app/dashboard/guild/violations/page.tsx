@@ -46,6 +46,7 @@ export default function GuildViolations() {
         limit: ITEMS_PER_PAGE,
         currentMembersOnly,
         daysAgo: daysAgo ?? undefined,
+        search: search || undefined,
       });
 
       setViolations(res.violations);
@@ -55,7 +56,7 @@ export default function GuildViolations() {
     } finally {
       setLoading(false);
     }
-  }, [selectedPlayer, page, currentMembersOnly, daysAgo]);
+  }, [selectedPlayer, page, currentMembersOnly, daysAgo, search]);
 
   useEffect(() => {
     fetchViolations();

@@ -53,20 +53,10 @@ export default function GuildWarnings() {
         currentMembersOnly,
         daysAgo: daysAgo ?? undefined,
         warningTypeId: warningTypeId ?? undefined,
+        search: search || undefined,
       });
 
-      // Client-side search filter
-      let filtered = res.warnings;
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filtered = filtered.filter(
-          (w) =>
-            w.player.name?.toLowerCase().includes(searchLower) ||
-            w.player.allyCode.includes(search)
-        );
-      }
-
-      setWarnings(filtered);
+      setWarnings(res.warnings);
       setTotal(res.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load warnings');
