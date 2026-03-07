@@ -4,6 +4,7 @@ import { useAuth } from '../../../../lib/auth-context';
 import { raidsApi, RaidHistoryResponse } from '../../../../lib/api';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { formatDate, formatTime } from '../../../../lib/dateUtils';
 
 export default function RaidHistoryPage() {
   const { session } = useAuth();
@@ -85,8 +86,8 @@ export default function RaidHistoryPage() {
                     <div>
                       <h3 className="text-lg font-semibold">{raidEntry.raid.raidType}</h3>
                       <p className="text-sm text-gray-400">
-                        Completed {expireTime.toLocaleDateString()} at{' '}
-                        {expireTime.toLocaleTimeString()}
+                        Completed {formatDate(expireTime)} at{' '}
+                        {formatTime(expireTime)}
                       </p>
                     </div>
                     <div className="text-right">

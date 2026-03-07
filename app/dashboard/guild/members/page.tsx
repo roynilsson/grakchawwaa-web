@@ -3,6 +3,7 @@
 import { useAuth } from '../../../../lib/auth-context';
 import { guildApi, GuildMemberDetailed, getMemberRole } from '../../../../lib/api';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { formatDate } from '../../../../lib/dateUtils';
 
 type SortField = 'name' | 'allyCode' | 'discordUsername' | 'role' | 'level' | 'gp' | 'joined' | 'activity';
 type SortDirection = 'asc' | 'desc';
@@ -100,15 +101,6 @@ export default function MembersPage() {
 
     return sorted;
   }, [members, sortField, sortDirection]);
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
 
   const formatNumber = (num?: number | string) => {
     if (!num) return '-';

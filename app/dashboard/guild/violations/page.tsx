@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Pagination } from '../../../../components/Pagination';
 import { Filters } from '../../../../components/Filters';
 import { useRouter } from 'next/navigation';
+import { formatDate } from '../../../../lib/dateUtils';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -68,14 +69,6 @@ export default function GuildViolations() {
   }, [search, daysAgo, currentMembersOnly]);
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
 
   if (!selectedPlayer || selectedPlayer.memberLevel < 3) {
     return <div className="text-center py-8">Access denied</div>;

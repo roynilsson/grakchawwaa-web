@@ -14,6 +14,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { formatDateTime } from '../../../../lib/dateUtils';
 
 type FormMode = 'none' | 'add' | 'edit';
 
@@ -121,14 +122,12 @@ export default function AutomationsPage() {
 
   const formatNextRun = (nextRunAt?: string) => {
     if (!nextRunAt) return 'Not scheduled';
-    const date = new Date(nextRunAt);
-    return date.toLocaleString();
+    return formatDateTime(nextRunAt);
   };
 
   const formatLastRun = (lastRunAt?: string) => {
     if (!lastRunAt) return 'Never';
-    const date = new Date(lastRunAt);
-    return date.toLocaleString();
+    return formatDateTime(lastRunAt);
   };
 
   const handleAddClick = () => {

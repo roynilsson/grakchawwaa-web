@@ -7,6 +7,7 @@ import { Pagination } from '../../../../components/Pagination';
 import { Filters } from '../../../../components/Filters';
 import { IssueWarningModal } from '../../../../components/IssueWarningModal';
 import { useRouter } from 'next/navigation';
+import { formatDate } from '../../../../lib/dateUtils';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -83,14 +84,6 @@ export default function GuildWarnings() {
   }, [search, daysAgo, warningTypeId, currentMembersOnly]);
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
 
   const getSeverityColor = (severity: number) => {
     if (severity >= 7) return 'bg-red-600';

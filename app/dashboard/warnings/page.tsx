@@ -5,6 +5,7 @@ import { warningsApi, Warning, WarningStats } from '../../../lib/api';
 import { useState, useEffect } from 'react';
 import { StatCard } from '../../../components/StatCard';
 import { Pagination } from '../../../components/Pagination';
+import { formatDate } from '../../../lib/dateUtils';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -51,14 +52,6 @@ export default function MyWarnings() {
   }, [selectedPlayer, page]);
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
 
   const getSeverityColor = (severity: number) => {
     if (severity >= 7) return 'bg-red-600';
