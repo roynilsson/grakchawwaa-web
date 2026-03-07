@@ -174,7 +174,7 @@ export default function AutomationsPage() {
     setEditingId(automation.id);
     setFormData({
       automationType: automation.automationType,
-      interval: automation.interval || 'weekly',
+      interval: automation.interval || typeConfig?.intervals[0] || 'daily',
       enabled: automation.enabled,
       thresholds: config.thresholds || [
         { threshold: 600, warningTypeId: warningTypes[0]?.id || 0 },
