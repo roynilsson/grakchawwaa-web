@@ -324,12 +324,14 @@ export interface AutomationTypeConfig {
   processedBy: 'backend' | 'bot';
   triggerType: 'calendar' | 'interval' | 'event';
   intervals: readonly string[];
+  defaultConfig?: Record<string, unknown>;
   config: {
     hasThresholds: boolean;
     thresholdLabel?: string;
     hasChannelId?: boolean;
     hasPlayerSelector?: boolean;
     hasReminderHours?: boolean;
+    hasOffsetMinutes?: boolean;
   };
 }
 
@@ -399,13 +401,16 @@ export interface ActiveRaidResponse {
 
 export interface RaidHistoryResponse {
   raids: Array<{
-    id: number;
-    raidType: string;
-    expireTime: string;
-    startTime: string;
-    guildRewardScore: number;
-    isFinalized: boolean;
+    raid: {
+      id: number;
+      raidType: string;
+      expireTime: string;
+      startTime: string;
+      guildRewardScore: number;
+    };
     results: RaidResult[];
+    participationRate: number;
+    avgScore: number;
   }>;
   total: number;
 }
