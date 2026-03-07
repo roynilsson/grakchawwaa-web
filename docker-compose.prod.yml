@@ -7,8 +7,9 @@ services:
     container_name: grakchawwaa-web
     ports:
       - "127.0.0.1:3001:3000"
+    env_file:
+      - .env
     environment:
-      - NEXT_PUBLIC_BACKEND_URL=https://api.grakchawwaa.com
       - NODE_ENV=production
     restart: unless-stopped
     # Port exposed to localhost only - nginx on host handles external traffic
