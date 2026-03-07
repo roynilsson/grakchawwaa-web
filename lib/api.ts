@@ -399,6 +399,13 @@ export interface ActiveRaidResponse {
   playerConfigs: PlayerRaidConfig[];
 }
 
+export interface RaidHistoryResult {
+  playerId: string;
+  playerName: string;
+  score: number;
+  rank: number;
+}
+
 export interface RaidHistoryResponse {
   raids: Array<{
     raid: {
@@ -408,7 +415,7 @@ export interface RaidHistoryResponse {
       startTime: string;
       guildRewardScore: number;
     };
-    results: RaidResult[];
+    results: RaidHistoryResult[];
     participationRate: number;
     avgScore: number;
   }>;
