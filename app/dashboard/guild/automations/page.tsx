@@ -30,6 +30,7 @@ interface FormData {
   guildChannelId: number | null;
   playerId: string | null;
   reminderHours: number[];
+  offsetMinutes: number;
 }
 
 const INTERVAL_LABELS: Record<string, string> = {
@@ -69,6 +70,7 @@ export default function AutomationsPage() {
     guildChannelId: null,
     playerId: null,
     reminderHours: [24, 6],
+    offsetMinutes: 2,
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -154,6 +156,7 @@ export default function AutomationsPage() {
       guildChannelId: null,
       playerId: null,
       reminderHours: [24, 6],
+      offsetMinutes: (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes ?? 2,
     });
   };
 
@@ -163,7 +166,10 @@ export default function AutomationsPage() {
       guildChannelId?: number;
       playerId?: string;
       reminderHours?: number[];
+      offsetMinutes?: number;
     };
+    const typeConfig = automationTypes[automation.automationType];
+    const defaultOffset = (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes ?? 2;
     setFormMode('edit');
     setEditingId(automation.id);
     setFormData({
@@ -176,6 +182,7 @@ export default function AutomationsPage() {
       guildChannelId: config.guildChannelId ?? null,
       playerId: config.playerId ?? null,
       reminderHours: config.reminderHours ?? [24, 6],
+      offsetMinutes: config.offsetMinutes ?? defaultOffset,
     });
   };
 
@@ -190,6 +197,7 @@ export default function AutomationsPage() {
       guildChannelId: null,
       playerId: null,
       reminderHours: [24, 6],
+      offsetMinutes: 2,
     });
   };
 
@@ -241,18 +249,25 @@ export default function AutomationsPage() {
         config.reminderHours = formData.reminderHours;
       }
 
+      // Add offsetMinutes if the type supports it
+      if (typeConfig?.config?.hasOffsetMinutes) {
+        config.offsetMinutes = formData.offsetMinutes;
+      }
+
       if (formMode === 'add') {
         await automationsApi.create({
           guildId: selectedPlayer.guildId,
           automationType: formData.automationType,
-          interval: formData.interval,
+          // Only include interval for calendar-triggered automations
+          ...(typeConfig?.triggerType === 'calendar' && { interval: formData.interval }),
           config,
           enabled: formData.enabled,
         });
         toast.success('Automation created successfully');
       } else if (formMode === 'edit' && editingId !== null) {
         await automationsApi.update(editingId, {
-          interval: formData.interval,
+          // Only include interval for calendar-triggered automations
+          ...(typeConfig?.triggerType === 'calendar' && { interval: formData.interval }),
           config,
           enabled: formData.enabled,
         });
@@ -391,6 +406,7 @@ export default function AutomationsPage() {
                       ...formData,
                       automationType: e.target.value,
                       interval: typeConfig?.intervals[0] || 'weekly',
+                      offsetMinutes: (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes ?? 2,
                     });
                   }}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
@@ -643,6 +659,31 @@ export default function AutomationsPage() {
               </div>
             )}
 
+            {/* Offset Minutes (for ticket collection/reminder) */}
+            {automationTypes[formData.automationType]?.config?.hasOffsetMinutes && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Minutes before reset
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={formData.offsetMinutes}
+                    onChange={(e) =>
+                      setFormData({ ...formData, offsetMinutes: Number(e.target.value) })
+                    }
+                    min={1}
+                    max={120}
+                    className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                  />
+                  <span className="text-gray-400 text-sm">minutes</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  How many minutes before the daily reset this automation should run.
+                </p>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex items-center gap-2 pt-2">
               <button
@@ -756,6 +797,16 @@ export default function AutomationsPage() {
                             ) : (
                               <span className="text-yellow-500">Not configured</span>
                             );
+                          })()}
+                        </div>
+                      )}
+                      {automationTypes[automation.automationType]?.config?.hasOffsetMinutes && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Offset: {(() => {
+                            const config = automation.config as { offsetMinutes?: number };
+                            const typeConfig = automationTypes[automation.automationType];
+                            const defaultOffset = (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes;
+                            return `${config.offsetMinutes ?? defaultOffset ?? 2} min before reset`;
                           })()}
                         </div>
                       )}
