@@ -4,7 +4,7 @@ import { useAuth } from '../../../../lib/auth-context';
 import { guildApi, GuildMemberDetailed, getMemberRole } from '../../../../lib/api';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-type SortField = 'name' | 'allyCode' | 'role' | 'level' | 'gp' | 'joined' | 'activity';
+type SortField = 'name' | 'allyCode' | 'discordUsername' | 'role' | 'level' | 'gp' | 'joined' | 'activity';
 type SortDirection = 'asc' | 'desc';
 
 export default function MembersPage() {
@@ -64,6 +64,10 @@ export default function MembersPage() {
         case 'allyCode':
           aVal = a.player.allyCode;
           bVal = b.player.allyCode;
+          break;
+        case 'discordUsername':
+          aVal = a.player.discordUsername?.toLowerCase() || '';
+          bVal = b.player.discordUsername?.toLowerCase() || '';
           break;
         case 'role':
           aVal = a.memberLevel || 0;
@@ -194,6 +198,7 @@ export default function MembersPage() {
               <tr>
                 <SortableHeader field="name">Player Name</SortableHeader>
                 <SortableHeader field="allyCode">Ally Code</SortableHeader>
+                <SortableHeader field="discordUsername">Discord</SortableHeader>
                 <SortableHeader field="role">Role</SortableHeader>
                 <SortableHeader field="level" align="right">Level</SortableHeader>
                 <SortableHeader field="gp" align="right">Galactic Power</SortableHeader>
@@ -207,7 +212,7 @@ export default function MembersPage() {
             <tbody className="divide-y divide-gray-700">
               {sortedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
                     No members found
                   </td>
                 </tr>
@@ -224,6 +229,9 @@ export default function MembersPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-400 font-mono">
                       {member.player.allyCode}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-400">
+                      {member.player.discordUsername || (member.player.discordId ? '(registered)' : '-')}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span

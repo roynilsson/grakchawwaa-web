@@ -236,6 +236,8 @@ export interface GuildMemberDetailed {
   memberLevel?: number;
   player: {
     allyCode: string;
+    discordId?: string;
+    discordUsername?: string;
     name?: string;
     playerId?: string;
     playerLevel?: number;
