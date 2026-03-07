@@ -1,15 +1,7 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === "production";
-const repoName = "grakchawwaa-web";
-
 const nextConfig: NextConfig = {
-  output: "export",
-  basePath: isProd ? `/${repoName}` : "",
-  assetPrefix: isProd ? `/${repoName}` : "",
-  images: {
-    unoptimized: true,
-  },
+  // No basePath/assetPrefix needed - served at root via nginx
 };
 
 export default nextConfig;
