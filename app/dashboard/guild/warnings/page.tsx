@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Pagination } from '../../../../components/Pagination';
 import { Filters } from '../../../../components/Filters';
 import { IssueWarningModal } from '../../../../components/IssueWarningModal';
+import { ImportCsvModal } from '../../../../components/ImportCsvModal';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../../../../lib/dateUtils';
 
@@ -23,6 +24,7 @@ export default function GuildWarnings() {
 
   // Modal state
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -107,12 +109,20 @@ export default function GuildWarnings() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Guild Warnings</h1>
-        <button
-          onClick={() => setShowIssueModal(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
-        >
-          Issue Warning
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded transition-colors"
+          >
+            Import CSV
+          </button>
+          <button
+            onClick={() => setShowIssueModal(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+          >
+            Issue Warning
+          </button>
+        </div>
       </div>
 
       <Filters
@@ -188,6 +198,17 @@ export default function GuildWarnings() {
       <IssueWarningModal
         isOpen={showIssueModal}
         onClose={() => setShowIssueModal(false)}
+        guildId={selectedPlayer.guildId}
+        issuedByAllyCode={selectedPlayer.allyCode}
+        onSuccess={() => {
+          fetchWarnings();
+        }}
+      />
+
+      <ImportCsvModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        type="warnings"
         guildId={selectedPlayer.guildId}
         issuedByAllyCode={selectedPlayer.allyCode}
         onSuccess={() => {
