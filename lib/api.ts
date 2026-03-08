@@ -120,6 +120,11 @@ export const violationsApi = {
   },
   getMyStats: (guildId: string, playerId: string) =>
     fetchApi<ViolationStats>(`/api/violations/stats/my?guildId=${guildId}&playerId=${playerId}`),
+  bulkCreate: (violations: Array<{ guildId: string; playerId: string; date: string; ticketCount: number }>) =>
+    fetchApi<{ created: number; updated: number }>('/api/violations/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ violations }),
+    }),
 };
 
 // Guild API
@@ -334,6 +339,7 @@ export interface AutomationTypeConfig {
     hasPlayerSelector?: boolean;
     hasReminderHours?: boolean;
     hasOffsetMinutes?: boolean;
+    hasDualOffsets?: boolean;
   };
 }
 
