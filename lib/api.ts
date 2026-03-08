@@ -95,6 +95,15 @@ export const warningsApi = {
       method: 'POST',
       body: JSON.stringify({ guildId, playerId, warningTypeId, note, issuedBy }),
     }),
+
+  bulkCreate: (
+    warnings: Array<{ guildId: string; allyCode: string; warningTypeId: number; date?: string; note?: string }>,
+    issuedBy: string
+  ) =>
+    fetchApi<{ created: number }>('/api/warnings/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ warnings, issuedBy }),
+    }),
 };
 
 // Violations API
