@@ -7,6 +7,7 @@ import { Pagination } from '../../../../components/Pagination';
 import { Filters } from '../../../../components/Filters';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../../../../lib/dateUtils';
+import { ImportCsvModal } from '../../../../components/ImportCsvModal';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -23,6 +24,9 @@ export default function GuildViolations() {
   const [search, setSearch] = useState('');
   const [daysAgo, setDaysAgo] = useState<number | null>(30);
   const [currentMembersOnly, setCurrentMembersOnly] = useState(true);
+
+  // Modal state
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const selectedPlayer = session?.players.find(
     (p) => p.allyCode === session.selectedAllyCode
@@ -84,7 +88,15 @@ export default function GuildViolations() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Guild Ticket Violations</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Guild Ticket Violations</h1>
+        <button
+          onClick={() => setShowImportModal(true)}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+        >
+          Import CSV
+        </button>
+      </div>
 
       <Filters
         onSearchChange={setSearch}
@@ -138,6 +150,17 @@ export default function GuildViolations() {
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
+      />
+
+      <ImportCsvModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        type="violations"
+        guildId={selectedPlayer.guildId}
+        issuedByAllyCode={selectedPlayer.allyCode}
+        onSuccess={() => {
+          fetchViolations();
+        }}
       />
     </div>
   );
