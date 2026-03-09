@@ -62,6 +62,20 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
 
             <div>
               <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Game Data
+              </h3>
+              <div className="space-y-1">
+                <Link href="/dashboard/game-data/characters" className={linkClasses('/dashboard/game-data/characters')} onClick={onClose}>
+                  Characters
+                </Link>
+                <Link href="/dashboard/game-data/ships" className={linkClasses('/dashboard/game-data/ships')} onClick={onClose}>
+                  Ships
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Guild
               </h3>
               <div className="space-y-1">
