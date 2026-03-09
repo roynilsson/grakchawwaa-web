@@ -16,10 +16,13 @@ export default function MembersPage() {
   const [currentMembersOnly, setCurrentMembersOnly] = useState(true);
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null);
 
   const selectedPlayer = session?.players.find(
     (p) => p.allyCode === session.selectedAllyCode
   );
+
+  const isOfficer = selectedPlayer && (selectedPlayer.memberLevel >= 3 || selectedPlayer.isAdmin);
 
   const fetchMembers = useCallback(async () => {
     if (!selectedPlayer) return;
@@ -49,6 +52,26 @@ export default function MembersPage() {
     } else {
       setSortField(field);
       setSortDirection('asc');
+    }
+  };
+
+  const handleToggleAdmin = async (member: GuildMemberDetailed) => {
+    if (!selectedPlayer || togglingAdmin) return;
+
+    setTogglingAdmin(member.player.allyCode);
+    try {
+      await guildApi.toggleAdmin(
+        selectedPlayer.guildId,
+        member.player.allyCode,
+        !member.isAdmin,
+        selectedPlayer.allyCode
+      );
+      // Refresh member list
+      await fetchMembers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle admin status');
+    } finally {
+      setTogglingAdmin(null);
     }
   };
 
@@ -199,12 +222,17 @@ export default function MembersPage() {
                 <th className="px-4 py-3 text-center text-sm font-semibold">
                   Status
                 </th>
+                {isOfficer && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
               {sortedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={isOfficer ? 10 : 9} className="px-4 py-8 text-center text-gray-400">
                     No members found
                   </td>
                 </tr>
@@ -226,15 +254,22 @@ export default function MembersPage() {
                       {member.player.discordUsername || (member.player.discordId ? '(registered)' : '-')}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`px-2 py-0.5 text-xs rounded font-semibold ${getRoleBadgeColor(
-                          member.memberLevel
-                        )}`}
-                      >
-                        {member.memberLevel
-                          ? getMemberRole(member.memberLevel)
-                          : 'Unknown'}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`px-2 py-0.5 text-xs rounded font-semibold ${getRoleBadgeColor(
+                            member.memberLevel
+                          )}`}
+                        >
+                          {member.memberLevel
+                            ? getMemberRole(member.memberLevel)
+                            : 'Unknown'}
+                        </span>
+                        {member.isAdmin && (
+                          <span className="px-2 py-0.5 text-xs rounded font-semibold bg-purple-600 text-white">
+                            Admin
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-gray-400">
                       {formatNumber(member.player.playerLevel)}
@@ -255,6 +290,27 @@ export default function MembersPage() {
                         <span className="inline-block w-2 h-2 rounded-full bg-gray-500"></span>
                       )}
                     </td>
+                    {isOfficer && (
+                      <td className="px-4 py-3 text-sm">
+                        {member.memberLevel !== 4 && member.memberLevel !== 3 && (
+                          <button
+                            onClick={() => handleToggleAdmin(member)}
+                            disabled={togglingAdmin === member.player.allyCode}
+                            className={`px-2 py-1 text-xs rounded ${
+                              member.isAdmin
+                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            } disabled:opacity-50`}
+                          >
+                            {togglingAdmin === member.player.allyCode
+                              ? '...'
+                              : member.isAdmin
+                              ? 'Remove Admin'
+                              : 'Make Admin'}
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
