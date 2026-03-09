@@ -44,7 +44,7 @@ export default function WarningTypesPage() {
 
   // Check officer permission
   useEffect(() => {
-    if (selectedPlayer && selectedPlayer.memberLevel < 3) {
+    if (selectedPlayer && selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
       router.push('/dashboard');
     }
   }, [selectedPlayer, router]);
@@ -155,7 +155,7 @@ export default function WarningTypesPage() {
     setDeleteConfirmId(null);
   };
 
-  if (!selectedPlayer || selectedPlayer.memberLevel < 3) {
+  if (!selectedPlayer || selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
     return <div className="text-center py-8">Access denied</div>;
   }
 

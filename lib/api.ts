@@ -149,6 +149,11 @@ export const guildApi = {
   },
   getChannels: (guildId: string) =>
     fetchApi<{ channels: GuildChannel[] }>(`/api/guilds/${guildId}/channels`),
+  toggleAdmin: (guildId: string, allyCode: string, isAdmin: boolean, callerAllyCode: string) =>
+    fetchApi<{ member: GuildMemberDetailed }>(`/api/guilds/${guildId}/members/${allyCode}/admin`, {
+      method: 'POST',
+      body: JSON.stringify({ isAdmin, callerAllyCode }),
+    }),
 };
 
 // Automations API
@@ -248,6 +253,7 @@ export interface GuildMemberDetailed {
   leftAt?: string;
   isActive: boolean;
   memberLevel?: number;
+  isAdmin?: boolean;
   player: {
     allyCode: string;
     discordId?: string;
@@ -267,6 +273,7 @@ export interface SessionPlayer {
   guildId: string;
   guildName: string;
   memberLevel: number;
+  isAdmin?: boolean;
   isMain: boolean;
 }
 
@@ -438,3 +445,137 @@ export interface RaidHistoryResponse {
   }>;
   total: number;
 }
+
+// Game Data Types
+export interface GameCategory {
+  id: string;
+  type: 'alignment' | 'role' | 'faction';
+  name: string;
+}
+
+export interface CharacterAbility {
+  name: string;
+  type: 'basic' | 'special' | 'leader' | 'unique';
+  hasZeta: boolean;
+  hasOmicron: boolean;
+  omicronMode?: string;
+}
+
+export interface CharacterSummary {
+  baseId: string;
+  name: string;
+  thumbnailName: string;
+  isLeader: boolean;
+  isGalacticLegend: boolean;
+  categories: GameCategory[];
+  abilities: CharacterAbility[];
+}
+
+export interface ShipAbility {
+  name: string;
+  type: 'basic' | 'special' | 'unique' | 'hardware';
+}
+
+export interface CrewMember {
+  baseId: string;
+  name: string;
+}
+
+export interface ShipSummary {
+  baseId: string;
+  name: string;
+  thumbnailName: string;
+  isCapital: boolean;
+  categories: GameCategory[];
+  crew: CrewMember[];
+  abilities: ShipAbility[];
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CharactersResponse {
+  data: CharacterSummary[];
+  pagination: PaginationInfo;
+}
+
+export interface ShipsResponse {
+  data: ShipSummary[];
+  pagination: PaginationInfo;
+}
+
+export interface CharacterFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  alignment?: string;
+  role?: string;
+  faction?: string;
+  isGalacticLegend?: boolean;
+  hasZeta?: boolean;
+  hasOmicron?: boolean;
+}
+
+export interface ShipFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  alignment?: string;
+  role?: string;
+  faction?: string;
+  isCapital?: boolean;
+}
+
+// Characters API
+export const charactersApi = {
+  list: (filters: CharacterFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.limit) params.set('limit', String(filters.limit));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.alignment) params.set('alignment', filters.alignment);
+    if (filters.role) params.set('role', filters.role);
+    if (filters.faction) params.set('faction', filters.faction);
+    if (filters.isGalacticLegend) params.set('isGalacticLegend', 'true');
+    if (filters.hasZeta) params.set('hasZeta', 'true');
+    if (filters.hasOmicron) params.set('hasOmicron', 'true');
+    const query = params.toString();
+    return fetchApi<CharactersResponse>(`/api/characters${query ? `?${query}` : ''}`);
+  },
+  get: (baseId: string) =>
+    fetchApi<{ character: CharacterSummary }>(`/api/characters/${baseId}`),
+};
+
+// Ships API
+export const shipsApi = {
+  list: (filters: ShipFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.limit) params.set('limit', String(filters.limit));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.alignment) params.set('alignment', filters.alignment);
+    if (filters.role) params.set('role', filters.role);
+    if (filters.faction) params.set('faction', filters.faction);
+    if (filters.isCapital) params.set('isCapital', 'true');
+    const query = params.toString();
+    return fetchApi<ShipsResponse>(`/api/ships${query ? `?${query}` : ''}`);
+  },
+  get: (baseId: string) =>
+    fetchApi<{ ship: ShipSummary }>(`/api/ships/${baseId}`),
+};
+
+// Categories API
+export const categoriesApi = {
+  list: (type?: 'alignment' | 'role' | 'faction') => {
+    const query = type ? `?type=${type}` : '';
+    return fetchApi<{ count: number; categories: GameCategory[] }>(`/api/categories${query}`);
+  },
+};
+
+// Helper for unit thumbnails
+export const getUnitThumbnail = (thumbnailName: string) =>
+  `https://game-assets.swgoh.gg/textures/${thumbnailName}.png`;

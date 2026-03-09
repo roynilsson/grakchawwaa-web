@@ -38,7 +38,7 @@ export default function GuildWarnings() {
 
   // Check officer permission
   useEffect(() => {
-    if (selectedPlayer && selectedPlayer.memberLevel < 3) {
+    if (selectedPlayer && selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
       router.push('/dashboard');
     }
   }, [selectedPlayer, router]);
@@ -93,7 +93,7 @@ export default function GuildWarnings() {
     return 'bg-blue-600';
   };
 
-  if (!selectedPlayer || selectedPlayer.memberLevel < 3) {
+  if (!selectedPlayer || selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
     return <div className="text-center py-8">Access denied</div>;
   }
 

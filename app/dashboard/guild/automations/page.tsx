@@ -84,7 +84,7 @@ export default function AutomationsPage() {
 
   // Check officer permission
   useEffect(() => {
-    if (selectedPlayer && selectedPlayer.memberLevel < 3) {
+    if (selectedPlayer && selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
       router.push('/dashboard');
     }
   }, [selectedPlayer, router]);
@@ -365,7 +365,7 @@ export default function AutomationsPage() {
     return warningTypes.find((wt) => wt.id === id)?.name || 'Unknown';
   };
 
-  if (!selectedPlayer || selectedPlayer.memberLevel < 3) {
+  if (!selectedPlayer || selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
     return <div className="text-center py-8">Access denied</div>;
   }
 

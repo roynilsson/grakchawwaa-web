@@ -95,7 +95,7 @@ export default function DashboardLayout({
     );
   }
 
-  const isOfficer = selectedPlayer.memberLevel >= 3;
+  const isOfficer = selectedPlayer.memberLevel >= 3 || selectedPlayer.isAdmin === true;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">

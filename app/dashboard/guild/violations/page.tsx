@@ -34,7 +34,7 @@ export default function GuildViolations() {
 
   // Check officer permission
   useEffect(() => {
-    if (selectedPlayer && selectedPlayer.memberLevel < 3) {
+    if (selectedPlayer && selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
       router.push('/dashboard');
     }
   }, [selectedPlayer, router]);
@@ -74,7 +74,7 @@ export default function GuildViolations() {
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
-  if (!selectedPlayer || selectedPlayer.memberLevel < 3) {
+  if (!selectedPlayer || selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
     return <div className="text-center py-8">Access denied</div>;
   }
 
