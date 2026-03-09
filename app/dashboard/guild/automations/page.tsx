@@ -31,7 +31,8 @@ interface FormData {
   guildChannelId: number | null;
   playerId: string | null;
   reminderHours: number[];
-  offsetMinutes: number;
+  primaryOffsetMinutes: number;
+  finalOffsetMinutes: number;
 }
 
 const INTERVAL_LABELS: Record<string, string> = {
@@ -71,7 +72,8 @@ export default function AutomationsPage() {
     guildChannelId: null,
     playerId: null,
     reminderHours: [24, 6],
-    offsetMinutes: 2,
+    primaryOffsetMinutes: 15,
+    finalOffsetMinutes: 2,
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -155,7 +157,8 @@ export default function AutomationsPage() {
       guildChannelId: null,
       playerId: null,
       reminderHours: [24, 6],
-      offsetMinutes: (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes ?? 2,
+      primaryOffsetMinutes: (typeConfig?.defaultConfig as { primaryOffsetMinutes?: number })?.primaryOffsetMinutes ?? 15,
+      finalOffsetMinutes: (typeConfig?.defaultConfig as { finalOffsetMinutes?: number })?.finalOffsetMinutes ?? 2,
     });
   };
 
@@ -165,15 +168,15 @@ export default function AutomationsPage() {
       guildChannelId?: number;
       playerId?: string;
       reminderHours?: number[];
+      primaryOffsetMinutes?: number;
+      finalOffsetMinutes?: number;
       offsetMinutes?: number;
     };
-    const typeConfig = automationTypes[automation.automationType];
-    const defaultOffset = (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes ?? 2;
     setFormMode('edit');
     setEditingId(automation.id);
     setFormData({
       automationType: automation.automationType,
-      interval: automation.interval || typeConfig?.intervals[0] || 'daily',
+      interval: automation.interval || automationTypes[automation.automationType]?.intervals[0] || 'daily',
       enabled: automation.enabled,
       thresholds: config.thresholds || [
         { threshold: 600, warningTypeId: warningTypes[0]?.id || 0 },
@@ -181,7 +184,8 @@ export default function AutomationsPage() {
       guildChannelId: config.guildChannelId ?? null,
       playerId: config.playerId ?? null,
       reminderHours: config.reminderHours ?? [24, 6],
-      offsetMinutes: config.offsetMinutes ?? defaultOffset,
+      primaryOffsetMinutes: config.primaryOffsetMinutes ?? config.offsetMinutes ?? 15,
+      finalOffsetMinutes: config.finalOffsetMinutes ?? 2,
     });
   };
 
@@ -196,7 +200,8 @@ export default function AutomationsPage() {
       guildChannelId: null,
       playerId: null,
       reminderHours: [24, 6],
-      offsetMinutes: 2,
+      primaryOffsetMinutes: 15,
+      finalOffsetMinutes: 2,
     });
   };
 
@@ -248,9 +253,15 @@ export default function AutomationsPage() {
         config.reminderHours = formData.reminderHours;
       }
 
-      // Add offsetMinutes if the type supports it
-      if (typeConfig?.config?.hasOffsetMinutes) {
-        config.offsetMinutes = formData.offsetMinutes;
+      // Add dual offsets if the type supports it (e.g., ticket_collection)
+      if (typeConfig?.config?.hasDualOffsets) {
+        config.primaryOffsetMinutes = formData.primaryOffsetMinutes;
+        config.finalOffsetMinutes = formData.finalOffsetMinutes;
+      }
+
+      // Add offsetMinutes if the type supports it but NOT dual offsets (e.g., ticket_reminder)
+      if (typeConfig?.config?.hasOffsetMinutes && !typeConfig?.config?.hasDualOffsets) {
+        config.offsetMinutes = formData.primaryOffsetMinutes;
       }
 
       if (formMode === 'add') {
@@ -405,7 +416,8 @@ export default function AutomationsPage() {
                       ...formData,
                       automationType: e.target.value,
                       interval: typeConfig?.intervals[0] || 'weekly',
-                      offsetMinutes: (typeConfig?.defaultConfig as { offsetMinutes?: number })?.offsetMinutes ?? 2,
+                      primaryOffsetMinutes: (typeConfig?.defaultConfig as { primaryOffsetMinutes?: number })?.primaryOffsetMinutes ?? 15,
+                      finalOffsetMinutes: (typeConfig?.defaultConfig as { finalOffsetMinutes?: number })?.finalOffsetMinutes ?? 2,
                     });
                   }}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
@@ -658,8 +670,57 @@ export default function AutomationsPage() {
               </div>
             )}
 
-            {/* Offset Minutes (for ticket collection/reminder) */}
-            {automationTypes[formData.automationType]?.config?.hasOffsetMinutes && (
+            {/* Dual Offset Minutes (for ticket collection) */}
+            {automationTypes[formData.automationType]?.config?.hasDualOffsets && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Primary collection (minutes before reset)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={formData.primaryOffsetMinutes}
+                      onChange={(e) =>
+                        setFormData({ ...formData, primaryOffsetMinutes: Number(e.target.value) })
+                      }
+                      min={3}
+                      max={60}
+                      className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                    />
+                    <span className="text-gray-400 text-sm">minutes</span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Safe buffer collection. Runs first to ensure data is captured.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Final collection (minutes before reset)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={formData.finalOffsetMinutes}
+                      onChange={(e) =>
+                        setFormData({ ...formData, finalOffsetMinutes: Number(e.target.value) })
+                      }
+                      min={1}
+                      max={30}
+                      className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                    />
+                    <span className="text-gray-400 text-sm">minutes</span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Last-chance collection. Captures most up-to-date data.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Single Offset Minutes (for ticket reminder) */}
+            {automationTypes[formData.automationType]?.config?.hasOffsetMinutes &&
+             !automationTypes[formData.automationType]?.config?.hasDualOffsets && (
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Minutes before reset
@@ -667,9 +728,9 @@ export default function AutomationsPage() {
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
-                    value={formData.offsetMinutes}
+                    value={formData.primaryOffsetMinutes}
                     onChange={(e) =>
-                      setFormData({ ...formData, offsetMinutes: Number(e.target.value) })
+                      setFormData({ ...formData, primaryOffsetMinutes: Number(e.target.value) })
                     }
                     min={1}
                     max={120}
@@ -799,7 +860,16 @@ export default function AutomationsPage() {
                           })()}
                         </div>
                       )}
-                      {automationTypes[automation.automationType]?.config?.hasOffsetMinutes && (
+                      {automationTypes[automation.automationType]?.config?.hasDualOffsets && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Offsets: {(() => {
+                            const config = automation.config as { primaryOffsetMinutes?: number; finalOffsetMinutes?: number };
+                            return `${config.primaryOffsetMinutes ?? 15}min / ${config.finalOffsetMinutes ?? 2}min`;
+                          })()}
+                        </div>
+                      )}
+                      {automationTypes[automation.automationType]?.config?.hasOffsetMinutes &&
+                       !automationTypes[automation.automationType]?.config?.hasDualOffsets && (
                         <div className="text-xs text-gray-500 mt-1">
                           Offset: {(() => {
                             const config = automation.config as { offsetMinutes?: number };
