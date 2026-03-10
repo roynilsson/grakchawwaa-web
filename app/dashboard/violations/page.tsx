@@ -30,7 +30,7 @@ export default function MyViolations() {
       setError(null);
       try {
         const [violationsRes, statsRes] = await Promise.all([
-          violationsApi.list({
+          violationsApi.listMy({
             guildId: selectedPlayer.guildId,
             playerId: selectedPlayer.playerId,
             page,

@@ -30,7 +30,7 @@ export default function MyWarnings() {
       setError(null);
       try {
         const [warningsRes, statsRes] = await Promise.all([
-          warningsApi.list({
+          warningsApi.listMy({
             guildId: selectedPlayer.guildId,
             playerId: selectedPlayer.allyCode,
             page,

@@ -68,6 +68,19 @@ export const warningsApi = {
     if (params.search) searchParams.set('search', params.search);
     return fetchApi<WarningsResponse>(`/api/warnings?${searchParams}`);
   },
+  listMy: (params: {
+    guildId: string;
+    playerId: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('guildId', params.guildId);
+    searchParams.set('playerId', params.playerId);
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    return fetchApi<WarningsResponse>(`/api/warnings/my?${searchParams}`);
+  },
   getMyStats: (guildId: string, playerId: string) =>
     fetchApi<WarningStats>(`/api/warnings/stats/my?guildId=${guildId}&playerId=${playerId}`),
   getTypes: (guildId: string) =>
@@ -126,6 +139,21 @@ export const violationsApi = {
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
     if (params.search) searchParams.set('search', params.search);
     return fetchApi<ViolationsResponse>(`/api/violations?${searchParams}`);
+  },
+  listMy: (params: {
+    guildId: string;
+    playerId: string;
+    page?: number;
+    limit?: number;
+    daysAgo?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('guildId', params.guildId);
+    searchParams.set('playerId', params.playerId);
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
+    return fetchApi<ViolationsResponse>(`/api/violations/my?${searchParams}`);
   },
   getMyStats: (guildId: string, playerId: string) =>
     fetchApi<ViolationStats>(`/api/violations/stats/my?guildId=${guildId}&playerId=${playerId}`),
