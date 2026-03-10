@@ -607,3 +607,136 @@ export const categoriesApi = {
 // Helper for unit thumbnails
 export const getUnitThumbnail = (thumbnailName: string) =>
   `https://game-assets.swgoh.gg/textures/${thumbnailName}.png`;
+
+// Squad Types
+export interface SquadTag {
+  id: string;
+  name: string;
+  guild?: { id: string };
+}
+
+export interface SquadSlotCharacter {
+  character: {
+    baseId: string;
+    name: string;
+    thumbnailName: string;
+  };
+  requiredZetas?: string[];
+  requiredOmicrons?: string[];
+}
+
+export interface SquadSlotShip {
+  ship: {
+    baseId: string;
+    name: string;
+    thumbnailName: string;
+  };
+}
+
+export interface SquadSlot {
+  id: string;
+  position: number;
+  slotType: 'specific' | 'category' | 'pool';
+  categoryMatchMode?: 'all' | 'any';
+  minRarity?: number;
+  minGearLevel?: number;
+  minRelicLevel?: number;
+  minCrewRelicLevel?: number;
+  categories: GameCategory[];
+  characters: SquadSlotCharacter[];
+  ships: SquadSlotShip[];
+}
+
+export interface Squad {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'squad' | 'fleet';
+  isTemplate: boolean;
+  tags: SquadTag[];
+  slots: SquadSlot[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SlotInput {
+  position: number;
+  slotType: 'specific' | 'category' | 'pool';
+  categoryMatchMode?: 'all' | 'any';
+  minRarity?: number;
+  minGearLevel?: number;
+  minRelicLevel?: number;
+  minCrewRelicLevel?: number;
+  categoryIds?: string[];
+  characters?: Array<{
+    characterId: string;
+    requiredZetas?: string[];
+    requiredOmicrons?: string[];
+  }>;
+  ships?: Array<{
+    shipId: string;
+  }>;
+}
+
+export interface SquadInput {
+  name: string;
+  description?: string;
+  type: 'squad' | 'fleet';
+  tagIds?: string[];
+  slots: SlotInput[];
+}
+
+// Squad Tags API
+export const squadTagsApi = {
+  listSystem: () => fetchApi<{ tags: SquadTag[] }>('/api/squad-tags'),
+  list: (guildId: string) => fetchApi<{ tags: SquadTag[] }>(`/api/guilds/${guildId}/squad-tags`),
+  create: (guildId: string, name: string) =>
+    fetchApi<{ tag: SquadTag }>(`/api/guilds/${guildId}/squad-tags`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+  delete: (guildId: string, tagId: string) =>
+    fetchApi<void>(`/api/guilds/${guildId}/squad-tags/${tagId}`, { method: 'DELETE' }),
+};
+
+// Squad Templates API
+export const squadTemplatesApi = {
+  list: (type?: 'squad' | 'fleet', tagId?: string) => {
+    const params = new URLSearchParams();
+    if (type) params.set('type', type);
+    if (tagId) params.set('tagId', tagId);
+    const query = params.toString();
+    return fetchApi<{ templates: Squad[] }>(`/api/squad-templates${query ? `?${query}` : ''}`);
+  },
+  get: (templateId: string) =>
+    fetchApi<{ template: Squad }>(`/api/squad-templates/${templateId}`),
+  copyToGuild: (guildId: string, templateId: string) =>
+    fetchApi<{ squad: Squad }>(`/api/guilds/${guildId}/squads/from-template/${templateId}`, {
+      method: 'POST',
+    }),
+};
+
+// Squads API
+export const squadsApi = {
+  list: (guildId: string, type?: 'squad' | 'fleet', tagId?: string) => {
+    const params = new URLSearchParams();
+    if (type) params.set('type', type);
+    if (tagId) params.set('tagId', tagId);
+    const query = params.toString();
+    return fetchApi<{ squads: Squad[] }>(`/api/guilds/${guildId}/squads${query ? `?${query}` : ''}`);
+  },
+  get: (guildId: string, squadId: string) =>
+    fetchApi<{ squad: Squad }>(`/api/guilds/${guildId}/squads/${squadId}`),
+  create: (guildId: string, data: SquadInput) =>
+    fetchApi<{ squad: Squad }>(`/api/guilds/${guildId}/squads`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (guildId: string, squadId: string, data: SquadInput) =>
+    fetchApi<{ squad: Squad }>(`/api/guilds/${guildId}/squads/${squadId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (guildId: string, squadId: string) =>
+    fetchApi<void>(`/api/guilds/${guildId}/squads/${squadId}`, { method: 'DELETE' }),
+};
