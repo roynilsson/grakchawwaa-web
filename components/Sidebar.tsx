@@ -111,6 +111,12 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
                   Officer Tools
                 </h3>
                 <div className="space-y-1">
+                  <Link href="/dashboard/guild/squads" className={linkClasses('/dashboard/guild/squads')} onClick={onClose}>
+                    Squads
+                  </Link>
+                  <Link href="/dashboard/guild/fleets" className={linkClasses('/dashboard/guild/fleets')} onClick={onClose}>
+                    Fleets
+                  </Link>
                   <Link href="/dashboard/guild/warnings" className={linkClasses('/dashboard/guild/warnings')} onClick={onClose}>
                     Warnings
                   </Link>
