@@ -11,5 +11,11 @@ services:
       - .env
     environment:
       - NODE_ENV=production
+    networks:
+      - grakchawwaa-network
     restart: unless-stopped
     # Port exposed to localhost only - nginx on host handles external traffic
+
+networks:
+  grakchawwaa-network:
+    external: true
