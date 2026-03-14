@@ -608,6 +608,92 @@ export const categoriesApi = {
 export const getUnitThumbnail = (thumbnailName: string) =>
   `https://game-assets.swgoh.gg/textures/${thumbnailName}.png`;
 
+// Journey Guide Types
+export interface JourneyGuideCharacter {
+  baseId: string;
+  name: string;
+  thumbnailName: string;
+  isGalacticLegend: boolean;
+}
+
+export interface JourneyGuideShip {
+  baseId: string;
+  name: string;
+  thumbnailName: string;
+}
+
+export interface JourneyRequirement {
+  id: number;
+  requiredCharacter: {
+    baseId: string;
+    name: string;
+    thumbnailName: string;
+  } | null;
+  requiredShip: {
+    baseId: string;
+    name: string;
+    thumbnailName: string;
+  } | null;
+  requiredCategory: {
+    id: string;
+    type: string;
+    name: string;
+  } | null;
+  minimumCount: number | null;
+  minimumStars: number | null;
+  minimumGearLevel: number | null;
+  minimumRelicLevel: number | null;
+  isShipRequirement: boolean;
+}
+
+export interface NestedRequirementData extends JourneyRequirement {
+  isDuplicate: boolean;
+}
+
+export interface NestedRequirementTier {
+  tier: number;
+  sourceGuide: {
+    id: number;
+    title: string;
+    character: { baseId: string; name: string; thumbnailName: string } | null;
+    ship: { baseId: string; name: string; thumbnailName: string } | null;
+  };
+  requirements: NestedRequirementData[];
+}
+
+export type JourneyGuideType =
+  | 'galactic_legend'
+  | 'fleet_mastery'
+  | 'epic'
+  | 'journey'
+  | 'legendary'
+  | 'progression'
+  | 'raid'
+  | 'territory_battle'
+  | 'other';
+
+export interface JourneyGuide {
+  id: number;
+  title: string;
+  type: JourneyGuideType;
+  character: JourneyGuideCharacter | null;
+  ship: JourneyGuideShip | null;
+  requirementsCount: number;
+  requirements: JourneyRequirement[];
+  nestedRequirements?: NestedRequirementTier[];
+}
+
+export interface JourneyGuidesResponse {
+  data: JourneyGuide[];
+  total: number;
+}
+
+// Journey Guides API
+export const journeyGuidesApi = {
+  list: () => fetchApi<JourneyGuidesResponse>('/api/journey-guides'),
+  get: (id: number) => fetchApi<{ journeyGuide: JourneyGuide }>(`/api/journey-guides/${id}`),
+};
+
 // Squad Types
 export interface SquadTag {
   id: string;
