@@ -1,5 +1,6 @@
 // grakchawwaa-web/lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+const API_KEY = process.env.NEXT_PUBLIC_INTERNAL_API_KEY || '';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -19,6 +20,7 @@ async function fetchApi<T>(
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
       ...options.headers,
     },
   });
