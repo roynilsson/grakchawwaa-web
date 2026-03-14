@@ -137,6 +137,7 @@ export default function WarningTypesPage() {
         toast.success('Warning type created successfully');
       } else if (formMode === 'edit' && editingId !== null) {
         await warningsApi.updateType(
+          selectedPlayer.guildId,
           editingId,
           formData.name.trim(),
           formData.severity,
@@ -160,11 +161,11 @@ export default function WarningTypesPage() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (deleteConfirmId === null) return;
+    if (deleteConfirmId === null || !selectedPlayer) return;
 
     setSubmitting(true);
     try {
-      await warningsApi.deleteType(deleteConfirmId);
+      await warningsApi.deleteType(selectedPlayer.guildId, deleteConfirmId);
       toast.success('Warning type deleted successfully');
       setDeleteConfirmId(null);
       fetchWarningTypes();

@@ -274,7 +274,7 @@ export default function AutomationsPage() {
         });
         toast.success('Automation created successfully');
       } else if (formMode === 'edit' && editingId !== null) {
-        await automationsApi.update(editingId, {
+        await automationsApi.update(selectedPlayer.guildId, editingId, {
           // Only include interval for calendar-triggered automations
           ...(typeConfig?.triggerType === 'calendar' && { interval: formData.interval }),
           config,
@@ -297,11 +297,11 @@ export default function AutomationsPage() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (deleteConfirmId === null) return;
+    if (deleteConfirmId === null || !selectedPlayer) return;
 
     setSubmitting(true);
     try {
-      await automationsApi.delete(deleteConfirmId);
+      await automationsApi.delete(selectedPlayer.guildId, deleteConfirmId);
       toast.success('Automation deleted successfully');
       setDeleteConfirmId(null);
       fetchData();
@@ -318,8 +318,9 @@ export default function AutomationsPage() {
   };
 
   const handleToggleEnabled = async (automation: Automation) => {
+    if (!selectedPlayer) return;
     try {
-      await automationsApi.update(automation.id, {
+      await automationsApi.update(selectedPlayer.guildId, automation.id, {
         enabled: !automation.enabled,
       });
       toast.success(

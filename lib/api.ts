@@ -96,14 +96,14 @@ export const warningsApi = {
       body: JSON.stringify({ name, severity, categoryId, description }),
     }),
 
-  // Warning Types - ID-based routes (top-level)
-  updateType: (id: number, name: string, severity: number, categoryId?: number | null, description?: string | null) =>
-    fetchApi<{ warningType: WarningType }>(`/api/warning-types/${id}`, {
+  // Warning Types - ID-based routes (nested under guild)
+  updateType: (guildId: string, id: number, name: string, severity: number, categoryId?: number | null, description?: string | null) =>
+    fetchApi<{ warningType: WarningType }>(`/api/guilds/${guildId}/warning-types/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ name, severity, categoryId, description }),
     }),
-  deleteType: (id: number) =>
-    fetchApi<void>(`/api/warning-types/${id}`, { method: 'DELETE' }),
+  deleteType: (guildId: string, id: number) =>
+    fetchApi<void>(`/api/guilds/${guildId}/warning-types/${id}`, { method: 'DELETE' }),
 
   // Issue Warning - guild-scoped
   issue: (guildId: string, playerId: string, warningTypeId: number, note?: string) =>
@@ -230,9 +230,11 @@ export const automationsApi = {
       body: JSON.stringify(data),
     }),
 
-  // ID-based routes (top-level)
-  get: (id: number) => fetchApi<{ automation: Automation }>(`/api/automations/${id}`),
+  // Guild-scoped ID routes
+  get: (guildId: string, id: number) =>
+    fetchApi<{ automation: Automation }>(`/api/guilds/${guildId}/automations/${id}`),
   update: (
+    guildId: string,
     id: number,
     data: {
       interval?: string;
@@ -240,12 +242,12 @@ export const automationsApi = {
       enabled?: boolean;
     }
   ) =>
-    fetchApi<{ automation: Automation }>(`/api/automations/${id}`, {
+    fetchApi<{ automation: Automation }>(`/api/guilds/${guildId}/automations/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
-  delete: (id: number) =>
-    fetchApi<void>(`/api/automations/${id}`, { method: 'DELETE' }),
+  delete: (guildId: string, id: number) =>
+    fetchApi<void>(`/api/guilds/${guildId}/automations/${id}`, { method: 'DELETE' }),
 };
 
 // Players API
