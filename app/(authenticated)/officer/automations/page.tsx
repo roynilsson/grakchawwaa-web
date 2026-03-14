@@ -265,8 +265,7 @@ export default function AutomationsPage() {
       }
 
       if (formMode === 'add') {
-        await automationsApi.create({
-          guildId: selectedPlayer.guildId,
+        await automationsApi.create(selectedPlayer.guildId, {
           automationType: formData.automationType,
           // Only include interval for calendar-triggered automations
           ...(typeConfig?.triggerType === 'calendar' && { interval: formData.interval }),

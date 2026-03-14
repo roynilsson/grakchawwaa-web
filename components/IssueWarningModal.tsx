@@ -90,8 +90,7 @@ export function IssueWarningModal({
         guildId,
         selectedAllyCode,
         selectedWarningTypeId,
-        note.trim() || undefined,
-        issuedByAllyCode
+        note.trim() || undefined
       );
       const playerName = selectedMember?.playerName || selectedAllyCode;
       toast.success(`Warning issued to ${playerName}`);

@@ -31,13 +31,12 @@ export default function MyViolations() {
       try {
         const [violationsRes, statsRes] = await Promise.all([
           violationsApi.listMy({
-            guildId: selectedPlayer.guildId,
-            playerId: selectedPlayer.playerId,
+            allyCode: selectedPlayer.allyCode,
             page,
             limit: ITEMS_PER_PAGE,
             daysAgo: 90,
           }),
-          violationsApi.getMyStats(selectedPlayer.guildId, selectedPlayer.playerId),
+          violationsApi.getMyStats(selectedPlayer.allyCode),
         ]);
         setViolations(violationsRes.violations);
         setTotal(violationsRes.total);

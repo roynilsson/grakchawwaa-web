@@ -31,12 +31,11 @@ export default function MyWarnings() {
       try {
         const [warningsRes, statsRes] = await Promise.all([
           warningsApi.listMy({
-            guildId: selectedPlayer.guildId,
-            playerId: selectedPlayer.allyCode,
+            allyCode: selectedPlayer.allyCode,
             page,
             limit: ITEMS_PER_PAGE,
           }),
-          warningsApi.getMyStats(selectedPlayer.guildId, selectedPlayer.allyCode),
+          warningsApi.getMyStats(selectedPlayer.allyCode),
         ]);
         setWarnings(warningsRes.warnings);
         setTotal(warningsRes.total);

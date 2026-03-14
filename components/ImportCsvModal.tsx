@@ -281,22 +281,20 @@ export function ImportCsvModal({
     try {
       if (type === 'violations') {
         const violations = validViolations.map((v) => ({
-          guildId,
           playerId: v.allyCode,
           date: `${v.date}T00:00:00.000Z`,
           ticketCount: v.ticketCount,
         }));
-        const result = await violationsApi.bulkCreate(violations);
+        const result = await violationsApi.bulkCreate(guildId, violations);
         toast.success(`Imported ${result.created} violations (${result.updated} updated)`);
       } else {
         const warnings = validWarnings.map((w) => ({
-          guildId,
           allyCode: w.allyCode,
           warningTypeId: w.warningTypeId,
           date: w.date ? `${w.date}T00:00:00.000Z` : undefined,
           note: w.note,
         }));
-        const result = await warningsApi.bulkCreate(warnings, issuedByAllyCode);
+        const result = await warningsApi.bulkCreate(guildId, warnings, issuedByAllyCode);
         toast.success(`Imported ${result.created} warnings`);
       }
 

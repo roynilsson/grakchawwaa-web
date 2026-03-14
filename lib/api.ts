@@ -47,6 +47,7 @@ export const authApi = {
 
 // Warnings API
 export const warningsApi = {
+  // Guild-scoped routes
   list: (params: {
     guildId: string;
     playerId?: string;
@@ -58,7 +59,6 @@ export const warningsApi = {
     search?: string;
   }) => {
     const searchParams = new URLSearchParams();
-    searchParams.set('guildId', params.guildId);
     if (params.playerId) searchParams.set('playerId', params.playerId);
     if (params.warningTypeId) searchParams.set('warningTypeId', String(params.warningTypeId));
     if (params.page) searchParams.set('page', String(params.page));
@@ -66,54 +66,57 @@ export const warningsApi = {
     if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
     if (params.search) searchParams.set('search', params.search);
-    return fetchApi<WarningsResponse>(`/api/warnings?${searchParams}`);
+    const query = searchParams.toString();
+    return fetchApi<WarningsResponse>(`/api/guilds/${params.guildId}/warnings${query ? `?${query}` : ''}`);
   },
+
+  // Player-scoped routes (for viewing own warnings)
   listMy: (params: {
-    guildId: string;
-    playerId: string;
+    allyCode: string;
     page?: number;
     limit?: number;
   }) => {
     const searchParams = new URLSearchParams();
-    searchParams.set('guildId', params.guildId);
-    searchParams.set('playerId', params.playerId);
     if (params.page) searchParams.set('page', String(params.page));
     if (params.limit) searchParams.set('limit', String(params.limit));
-    return fetchApi<WarningsResponse>(`/api/warnings/my?${searchParams}`);
+    const query = searchParams.toString();
+    return fetchApi<WarningsResponse>(`/api/players/${params.allyCode}/warnings${query ? `?${query}` : ''}`);
   },
-  getMyStats: (guildId: string, playerId: string) =>
-    fetchApi<WarningStats>(`/api/warnings/stats/my?guildId=${guildId}&playerId=${playerId}`),
-  getTypes: (guildId: string) =>
-    fetchApi<{ warningTypes: WarningType[] }>(`/api/warnings/types?guildId=${guildId}`),
+  getMyStats: (allyCode: string) =>
+    fetchApi<WarningStats>(`/api/players/${allyCode}/warnings/stats`),
 
-  // Warning Types CRUD
+  // Warning Types - guild-scoped
+  getTypes: (guildId: string, search?: string) => {
+    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    return fetchApi<{ warningTypes: WarningType[] }>(`/api/guilds/${guildId}/warning-types${query}`);
+  },
   createType: (guildId: string, name: string, severity: number, categoryId?: number, description?: string) =>
-    fetchApi<{ warningType: WarningType }>('/api/warnings/types', {
+    fetchApi<{ warningType: WarningType }>(`/api/guilds/${guildId}/warning-types`, {
       method: 'POST',
-      body: JSON.stringify({ guildId, name, severity, categoryId, description }),
-    }),
-
-  updateType: (id: number, name: string, severity: number, categoryId?: number | null, description?: string | null) =>
-    fetchApi<{ warningType: WarningType }>(`/api/warnings/types/${id}`, {
-      method: 'PUT',
       body: JSON.stringify({ name, severity, categoryId, description }),
     }),
 
-  deleteType: (id: number) =>
-    fetchApi<void>(`/api/warnings/types/${id}`, { method: 'DELETE' }),
-
-  // Issue Warning
-  issue: (guildId: string, playerId: string, warningTypeId: number, note?: string, issuedBy?: string) =>
-    fetchApi<{ warning: Warning }>('/api/warnings', {
-      method: 'POST',
-      body: JSON.stringify({ guildId, playerId, warningTypeId, note, issuedBy }),
+  // Warning Types - ID-based routes (top-level)
+  updateType: (id: number, name: string, severity: number, categoryId?: number | null, description?: string | null) =>
+    fetchApi<{ warningType: WarningType }>(`/api/warning-types/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, severity, categoryId, description }),
     }),
+  deleteType: (id: number) =>
+    fetchApi<void>(`/api/warning-types/${id}`, { method: 'DELETE' }),
 
+  // Issue Warning - guild-scoped
+  issue: (guildId: string, playerId: string, warningTypeId: number, note?: string) =>
+    fetchApi<{ warning: Warning }>(`/api/guilds/${guildId}/warnings`, {
+      method: 'POST',
+      body: JSON.stringify({ playerId, warningTypeId, note }),
+    }),
   bulkCreate: (
-    warnings: Array<{ guildId: string; allyCode: string; warningTypeId: number; date?: string; note?: string }>,
+    guildId: string,
+    warnings: Array<{ allyCode: string; warningTypeId: number; date?: string; note?: string }>,
     issuedBy: string
   ) =>
-    fetchApi<{ created: number }>('/api/warnings/bulk', {
+    fetchApi<{ created: number }>(`/api/guilds/${guildId}/warnings/bulk`, {
       method: 'POST',
       body: JSON.stringify({ warnings, issuedBy }),
     }),
@@ -139,6 +142,7 @@ export const warningCategoriesApi = {
 
 // Violations API
 export const violationsApi = {
+  // Guild-scoped routes
   list: (params: {
     guildId: string;
     playerId?: string;
@@ -149,34 +153,36 @@ export const violationsApi = {
     search?: string;
   }) => {
     const searchParams = new URLSearchParams();
-    searchParams.set('guildId', params.guildId);
     if (params.playerId) searchParams.set('playerId', params.playerId);
     if (params.page) searchParams.set('page', String(params.page));
     if (params.limit) searchParams.set('limit', String(params.limit));
     if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
     if (params.search) searchParams.set('search', params.search);
-    return fetchApi<ViolationsResponse>(`/api/violations?${searchParams}`);
+    const query = searchParams.toString();
+    return fetchApi<ViolationsResponse>(`/api/guilds/${params.guildId}/violations${query ? `?${query}` : ''}`);
   },
+
+  // Player-scoped routes (for viewing own violations)
   listMy: (params: {
-    guildId: string;
-    playerId: string;
+    allyCode: string;
     page?: number;
     limit?: number;
     daysAgo?: number;
   }) => {
     const searchParams = new URLSearchParams();
-    searchParams.set('guildId', params.guildId);
-    searchParams.set('playerId', params.playerId);
     if (params.page) searchParams.set('page', String(params.page));
     if (params.limit) searchParams.set('limit', String(params.limit));
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
-    return fetchApi<ViolationsResponse>(`/api/violations/my?${searchParams}`);
+    const query = searchParams.toString();
+    return fetchApi<ViolationsResponse>(`/api/players/${params.allyCode}/violations${query ? `?${query}` : ''}`);
   },
-  getMyStats: (guildId: string, playerId: string) =>
-    fetchApi<ViolationStats>(`/api/violations/stats/my?guildId=${guildId}&playerId=${playerId}`),
-  bulkCreate: (violations: Array<{ guildId: string; playerId: string; date: string; ticketCount: number }>) =>
-    fetchApi<{ created: number; updated: number }>('/api/violations/bulk', {
+  getMyStats: (allyCode: string) =>
+    fetchApi<ViolationStats>(`/api/players/${allyCode}/violations/stats`),
+
+  // Guild-scoped bulk create
+  bulkCreate: (guildId: string, violations: Array<{ playerId: string; date: string; ticketCount: number }>) =>
+    fetchApi<{ created: number; updated: number }>(`/api/guilds/${guildId}/violations/bulk`, {
       method: 'POST',
       body: JSON.stringify({ violations }),
     }),
@@ -204,21 +210,28 @@ export const guildApi = {
 
 // Automations API
 export const automationsApi = {
+  // Top-level routes
   getTypes: () => fetchApi<{ automationTypes: AutomationTypesRegistry }>('/api/automations/types'),
+
+  // Guild-scoped routes
   list: (guildId: string) =>
-    fetchApi<{ automations: Automation[] }>(`/api/automations?guildId=${guildId}`),
-  get: (id: number) => fetchApi<{ automation: Automation }>(`/api/automations/${id}`),
-  create: (data: {
-    guildId: string;
-    automationType: string;
-    interval?: string;
-    config?: Record<string, unknown>;
-    enabled?: boolean;
-  }) =>
-    fetchApi<{ automation: Automation }>('/api/automations', {
+    fetchApi<{ automations: Automation[] }>(`/api/guilds/${guildId}/automations`),
+  create: (
+    guildId: string,
+    data: {
+      automationType: string;
+      interval?: string;
+      config?: Record<string, unknown>;
+      enabled?: boolean;
+    }
+  ) =>
+    fetchApi<{ automation: Automation }>(`/api/guilds/${guildId}/automations`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // ID-based routes (top-level)
+  get: (id: number) => fetchApi<{ automation: Automation }>(`/api/automations/${id}`),
   update: (
     id: number,
     data: {
