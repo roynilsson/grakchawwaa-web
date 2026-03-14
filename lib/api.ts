@@ -87,16 +87,16 @@ export const warningsApi = {
     fetchApi<{ warningTypes: WarningType[] }>(`/api/warnings/types?guildId=${guildId}`),
 
   // Warning Types CRUD
-  createType: (guildId: string, name: string, severity: number) =>
+  createType: (guildId: string, name: string, severity: number, categoryId?: number, description?: string) =>
     fetchApi<{ warningType: WarningType }>('/api/warnings/types', {
       method: 'POST',
-      body: JSON.stringify({ guildId, name, severity }),
+      body: JSON.stringify({ guildId, name, severity, categoryId, description }),
     }),
 
-  updateType: (id: number, name: string, severity: number) =>
+  updateType: (id: number, name: string, severity: number, categoryId?: number | null, description?: string | null) =>
     fetchApi<{ warningType: WarningType }>(`/api/warnings/types/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ name, severity }),
+      body: JSON.stringify({ name, severity, categoryId, description }),
     }),
 
   deleteType: (id: number) =>
@@ -117,6 +117,24 @@ export const warningsApi = {
       method: 'POST',
       body: JSON.stringify({ warnings, issuedBy }),
     }),
+};
+
+// Warning Categories API
+export const warningCategoriesApi = {
+  list: async (guildId: string): Promise<{ categories: WarningCategory[] }> => {
+    return fetchApi(`/api/guilds/${guildId}/warning-categories`);
+  },
+  create: async (guildId: string, name: string): Promise<{ category: WarningCategory }> => {
+    return fetchApi(`/api/guilds/${guildId}/warning-categories`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  },
+  delete: async (guildId: string, id: number): Promise<void> => {
+    await fetchApi(`/api/guilds/${guildId}/warning-categories/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 // Violations API
@@ -340,10 +358,17 @@ export interface WarningStats {
   last30Days: number;
 }
 
+export interface WarningCategory {
+  id: number;
+  name: string;
+}
+
 export interface WarningType {
   id: number;
   name: string;
   severity: number;
+  category?: WarningCategory | null;
+  description?: string | null;
 }
 
 export interface Violation {
