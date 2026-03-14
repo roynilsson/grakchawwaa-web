@@ -267,7 +267,7 @@ export default function JourneyGuideDetailPage() {
       {expandedTiers.map(tier => (
         <div key={`tier-${tier.tier}-${tier.sourceGuide.id}`} className="bg-gray-800 rounded-lg border border-gray-700 p-6 mt-6">
           <h2 className="text-lg font-semibold mb-2">
-            Tier {tier.tier} Requirements
+            Additional Requirements
           </h2>
           <p className="text-sm text-gray-400 mb-4">
             From:{' '}
