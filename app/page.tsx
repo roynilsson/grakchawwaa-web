@@ -15,9 +15,9 @@ export default function Home() {
     if (!loading && session) {
       // Redirect authenticated users
       if (session.players.length > 1 && !session.selectedAllyCode) {
-        router.push('/select-player');
+        router.push('/auth/select-player');
       } else if (session.selectedAllyCode) {
-        router.push('/dashboard');
+        router.push('/player');
       }
     }
   }, [session, loading, router]);

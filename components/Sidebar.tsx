@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 interface SidebarProps {
   isOfficer: boolean;
@@ -9,8 +10,80 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+interface NavSection {
+  title: string;
+  basePath: string;
+  items: { label: string; href: string }[];
+  officerOnly?: boolean;
+}
+
+const navSections: NavSection[] = [
+  {
+    title: 'Player',
+    basePath: '/player',
+    items: [
+      { label: 'Dashboard', href: '/player' },
+      { label: 'My Warnings', href: '/player/warnings' },
+      { label: 'My Violations', href: '/player/violations' },
+      { label: 'Settings', href: '/player/settings' },
+    ],
+  },
+  {
+    title: 'Guild',
+    basePath: '/guild',
+    items: [
+      { label: 'Members', href: '/guild/members' },
+      { label: 'Squads', href: '/guild/squads' },
+      { label: 'Fleets', href: '/guild/fleets' },
+      { label: 'Raids', href: '/guild/raids' },
+    ],
+  },
+  {
+    title: 'Officer',
+    basePath: '/officer',
+    officerOnly: true,
+    items: [
+      { label: 'Warnings', href: '/officer/warnings' },
+      { label: 'Violations', href: '/officer/violations' },
+      { label: 'Automations', href: '/officer/automations' },
+      { label: 'Raid Config', href: '/officer/raid-config' },
+      { label: 'Warning Types', href: '/officer/warning-types' },
+    ],
+  },
+  {
+    title: 'Game Data',
+    basePath: '/game-data',
+    items: [
+      { label: 'Characters', href: '/game-data/characters' },
+      { label: 'Ships', href: '/game-data/ships' },
+      { label: 'Journey Guides', href: '/game-data/journey-guides' },
+    ],
+  },
+];
+
 export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+
+  const getInitialExpandedSections = () => {
+    const expanded: Record<string, boolean> = {};
+    navSections.forEach((section) => {
+      expanded[section.basePath] = pathname.startsWith(section.basePath);
+    });
+    return expanded;
+  };
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(getInitialExpandedSections);
+
+  useEffect(() => {
+    setExpandedSections(getInitialExpandedSections());
+  }, [pathname]);
+
+  const toggleSection = (basePath: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [basePath]: !prev[basePath],
+    }));
+  };
 
   const isActive = (path: string) => pathname === path;
 
@@ -21,9 +94,12 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
     }`;
 
+  const visibleSections = navSections.filter(
+    (section) => !section.officerOnly || isOfficer
+  );
+
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -31,7 +107,6 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
@@ -42,7 +117,6 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
         `}
       >
         <div className="p-4">
-          {/* Close button for mobile */}
           <button
             onClick={onClose}
             className="lg:hidden absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -53,88 +127,41 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
             </svg>
           </button>
 
-          <nav className="space-y-6">
-            <div>
-              <Link href="/dashboard" className={linkClasses('/dashboard')} onClick={onClose}>
-                Dashboard
-              </Link>
-            </div>
-
-            <div>
-              <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Game Data
-              </h3>
-              <div className="space-y-1">
-                <Link href="/dashboard/game-data/characters" className={linkClasses('/dashboard/game-data/characters')} onClick={onClose}>
-                  Characters
-                </Link>
-                <Link href="/dashboard/game-data/ships" className={linkClasses('/dashboard/game-data/ships')} onClick={onClose}>
-                  Ships
-                </Link>
+          <nav className="space-y-2 mt-8 lg:mt-0">
+            {visibleSections.map((section) => (
+              <div key={section.basePath}>
+                <button
+                  onClick={() => toggleSection(section.basePath)}
+                  className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors"
+                >
+                  <span>{section.title}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${
+                      expandedSections[section.basePath] ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {expandedSections[section.basePath] && (
+                  <div className="space-y-1 mt-1">
+                    {section.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={linkClasses(item.href)}
+                        onClick={onClose}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-
-            <div>
-              <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Guild
-              </h3>
-              <div className="space-y-1">
-                <Link href="/dashboard/guild/members" className={linkClasses('/dashboard/guild/members')} onClick={onClose}>
-                  Members
-                </Link>
-                <Link href="/dashboard/raids" className={linkClasses('/dashboard/raids')} onClick={onClose}>
-                  Raids
-                </Link>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                My Account
-              </h3>
-              <div className="space-y-1">
-                <Link href="/dashboard/warnings" className={linkClasses('/dashboard/warnings')} onClick={onClose}>
-                  Warnings
-                </Link>
-                <Link href="/dashboard/violations" className={linkClasses('/dashboard/violations')} onClick={onClose}>
-                  Ticket Violations
-                </Link>
-                <Link href="/dashboard/settings" className={linkClasses('/dashboard/settings')} onClick={onClose}>
-                  Settings
-                </Link>
-              </div>
-            </div>
-
-            {isOfficer && (
-              <div>
-                <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Officer Tools
-                </h3>
-                <div className="space-y-1">
-                  <Link href="/dashboard/guild/squads" className={linkClasses('/dashboard/guild/squads')} onClick={onClose}>
-                    Squads
-                  </Link>
-                  <Link href="/dashboard/guild/fleets" className={linkClasses('/dashboard/guild/fleets')} onClick={onClose}>
-                    Fleets
-                  </Link>
-                  <Link href="/dashboard/guild/warnings" className={linkClasses('/dashboard/guild/warnings')} onClick={onClose}>
-                    Warnings
-                  </Link>
-                  <Link href="/dashboard/guild/violations" className={linkClasses('/dashboard/guild/violations')} onClick={onClose}>
-                    Ticket Violations
-                  </Link>
-                  <Link href="/dashboard/guild/warning-types" className={linkClasses('/dashboard/guild/warning-types')} onClick={onClose}>
-                    Warning Types
-                  </Link>
-                  <Link href="/dashboard/guild/raid-config" className={linkClasses('/dashboard/guild/raid-config')} onClick={onClose}>
-                    Raid Configuration
-                  </Link>
-                  <Link href="/dashboard/guild/automations" className={linkClasses('/dashboard/guild/automations')} onClick={onClose}>
-                    Automations
-                  </Link>
-                </div>
-              </div>
-            )}
+            ))}
           </nav>
         </div>
       </aside>

@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.selectPlayer(allyCode);
       await fetchSession();
-      router.push('/dashboard');
+      router.push('/player');
     } catch (err) {
       throw err;
     }
