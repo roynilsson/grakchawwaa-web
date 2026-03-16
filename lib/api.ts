@@ -59,6 +59,7 @@ export const warningsApi = {
     currentMembersOnly?: boolean;
     daysAgo?: number;
     search?: string;
+    includeDeleted?: boolean;
   }) => {
     const searchParams = new URLSearchParams();
     if (params.playerId) searchParams.set('playerId', params.playerId);
@@ -68,6 +69,7 @@ export const warningsApi = {
     if (params.currentMembersOnly !== undefined) searchParams.set('currentMembersOnly', String(params.currentMembersOnly));
     if (params.daysAgo) searchParams.set('daysAgo', String(params.daysAgo));
     if (params.search) searchParams.set('search', params.search);
+    if (params.includeDeleted) searchParams.set('includeDeleted', 'true');
     const query = searchParams.toString();
     return fetchApi<WarningsResponse>(`/api/guilds/${params.guildId}/warnings${query ? `?${query}` : ''}`);
   },
@@ -132,6 +134,27 @@ export const warningsApi = {
     fetchApi<{ created: number }>(`/api/guilds/${guildId}/warnings/bulk`, {
       method: 'POST',
       body: JSON.stringify({ warnings, issuedBy }),
+    }),
+
+  // Edit a warning
+  update: (guildId: string, id: number, updates: { note?: string; warningTypeId?: number }, editedBy: string) =>
+    fetchApi<{ warning: Warning }>(`/api/guilds/${guildId}/warnings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...updates, editedBy }),
+    }),
+
+  // Soft delete a warning
+  delete: (guildId: string, id: number, deletedBy: string) =>
+    fetchApi<void>(`/api/guilds/${guildId}/warnings/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ deletedBy }),
+    }),
+
+  // Restore a soft-deleted warning
+  restore: (guildId: string, id: number, restoredBy: string) =>
+    fetchApi<{ warning: Warning }>(`/api/guilds/${guildId}/warnings/${id}/restore`, {
+      method: 'POST',
+      body: JSON.stringify({ restoredBy }),
     }),
 };
 
@@ -372,6 +395,10 @@ export interface Warning {
   player: { allyCode: string; name?: string };
   warningType: { id: number; name: string; severity: number };
   issuedByPlayer?: { allyCode: string; name?: string };
+  editedAt?: string;
+  editedByPlayer?: { allyCode: string; name?: string };
+  deletedAt?: string;
+  deletedByPlayer?: { allyCode: string; name?: string };
 }
 
 export interface WarningsResponse {
