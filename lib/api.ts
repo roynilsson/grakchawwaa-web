@@ -106,6 +106,17 @@ export const warningsApi = {
     }),
   deleteType: (guildId: string, id: number) =>
     fetchApi<void>(`/api/guilds/${guildId}/warning-types/${id}`, { method: 'DELETE' }),
+  bulkCreateTypes: (
+    guildId: string,
+    warningTypes: Array<{ name: string; severity: number; category?: string; description?: string }>
+  ) =>
+    fetchApi<{ created: number; skipped: number; categoriesCreated: number }>(
+      `/api/guilds/${guildId}/warning-types/bulk`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ warningTypes }),
+      }
+    ),
 
   // Issue Warning - guild-scoped
   issue: (guildId: string, playerId: string, warningTypeId: number, note?: string) =>
