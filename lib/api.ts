@@ -156,6 +156,23 @@ export const warningsApi = {
       method: 'POST',
       body: JSON.stringify({ restoredBy }),
     }),
+
+  // Get warning summary for guild members
+  getSummary: async (
+    guildId: string,
+    periods?: number[],
+    limit?: number
+  ): Promise<WarningSummary> => {
+    const params = new URLSearchParams();
+    if (periods && periods.length > 0) {
+      params.set('periods', periods.join(','));
+    }
+    if (limit) {
+      params.set('limit', String(limit));
+    }
+    const queryString = params.toString();
+    return fetchApi(`/api/guilds/${guildId}/warnings/summary${queryString ? `?${queryString}` : ''}`);
+  },
 };
 
 // Warning Categories API
@@ -424,6 +441,18 @@ export interface WarningType {
   severity: number;
   category?: WarningCategory | null;
   description?: string | null;
+}
+
+export interface WarningSummaryPlayer {
+  allyCode: string;
+  name: string | null;
+  values: number[];
+}
+
+export interface WarningSummary {
+  periods: number[];
+  basePeriod: number;
+  players: WarningSummaryPlayer[];
 }
 
 export interface Violation {
