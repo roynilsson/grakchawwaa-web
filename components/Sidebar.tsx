@@ -44,6 +44,7 @@ const navSections: NavSection[] = [
     officerOnly: true,
     items: [
       { label: 'Warnings', href: '/officer/warnings' },
+      { label: 'Warning Summary', href: '/officer/warnings/summary' },
       { label: 'Violations', href: '/officer/violations' },
       { label: 'Automations', href: '/officer/automations' },
       { label: 'Raid Config', href: '/officer/raid-config' },
