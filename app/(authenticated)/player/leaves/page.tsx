@@ -154,9 +154,10 @@ export default function MyLeaves() {
       </div>
 
       {/* Create Modal */}
-      {showCreateModal && selectedPlayer && (
+      {showCreateModal && selectedPlayer && selectedPlayer.guildId && (
         <CreateLeaveModal
           allyCode={selectedPlayer.allyCode}
+          guildId={selectedPlayer.guildId}
           onClose={() => setShowCreateModal(false)}
           onCreated={() => {
             setShowCreateModal(false);
@@ -170,11 +171,12 @@ export default function MyLeaves() {
 
 interface CreateLeaveModalProps {
   allyCode: string;
+  guildId: string;
   onClose: () => void;
   onCreated: () => void;
 }
 
-function CreateLeaveModal({ allyCode, onClose, onCreated }: CreateLeaveModalProps) {
+function CreateLeaveModal({ allyCode, guildId, onClose, onCreated }: CreateLeaveModalProps) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [leaveType, setLeaveType] = useState<LeaveType>('away');
@@ -190,6 +192,7 @@ function CreateLeaveModal({ allyCode, onClose, onCreated }: CreateLeaveModalProp
     try {
       await leavesApi.create({
         allyCode,
+        guildId,
         startDate,
         endDate,
         leaveType,

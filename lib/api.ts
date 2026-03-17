@@ -965,42 +965,58 @@ export interface LeaveSummary {
 // Leaves API
 export const leavesApi = {
   // Player-scoped routes (for viewing/managing own leaves)
-  listMy: (params: { allyCode: string; active?: boolean }) => {
+  listMy: async (params: { allyCode: string; active?: boolean }) => {
     const searchParams = new URLSearchParams();
     if (params.active !== undefined) searchParams.set('active', String(params.active));
     const query = searchParams.toString();
-    return fetchApi<Leave[]>(`/api/players/${params.allyCode}/leaves${query ? `?${query}` : ''}`);
+    const response = await fetchApi<{ leaves: Leave[]; count: number; total: number; page: number }>(
+      `/api/players/${params.allyCode}/leaves${query ? `?${query}` : ''}`
+    );
+    return response.leaves;
   },
 
-  create: (params: { allyCode: string; startDate: string; endDate: string; leaveType?: LeaveType; note?: string }) =>
-    fetchApi<Leave>(`/api/players/${params.allyCode}/leaves`, {
+  create: async (params: {
+    allyCode: string;
+    guildId: string;
+    startDate: string;
+    endDate: string;
+    leaveType?: LeaveType;
+    note?: string;
+  }) => {
+    const response = await fetchApi<{ leave: Leave }>(`/api/players/${params.allyCode}/leaves`, {
       method: 'POST',
       body: JSON.stringify({
+        guildId: params.guildId,
         startDate: params.startDate,
         endDate: params.endDate,
         leaveType: params.leaveType || 'away',
         note: params.note,
       }),
-    }),
-
-  // Guild-scoped routes (for officers)
-  listByGuild: (params: { guildId: string; active?: boolean; playerId?: string }) => {
-    const searchParams = new URLSearchParams();
-    if (params.active !== undefined) searchParams.set('active', String(params.active));
-    if (params.playerId) searchParams.set('playerId', params.playerId);
-    const query = searchParams.toString();
-    return fetchApi<Leave[]>(`/api/guilds/${params.guildId}/leaves${query ? `?${query}` : ''}`);
+    });
+    return response.leave;
   },
 
-  createForPlayer: (params: {
+  // Guild-scoped routes (for officers)
+  listByGuild: async (params: { guildId: string; active?: boolean; playerId?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params.active !== undefined) searchParams.set('activeOnly', String(params.active));
+    if (params.playerId) searchParams.set('playerId', params.playerId);
+    const query = searchParams.toString();
+    const response = await fetchApi<{ leaves: Leave[]; count: number; total: number; page: number }>(
+      `/api/guilds/${params.guildId}/leaves${query ? `?${query}` : ''}`
+    );
+    return response.leaves;
+  },
+
+  createForPlayer: async (params: {
     guildId: string;
     playerAllyCode: string;
     startDate: string;
     endDate: string;
     leaveType?: LeaveType;
     note?: string;
-  }) =>
-    fetchApi<Leave>(`/api/guilds/${params.guildId}/leaves`, {
+  }) => {
+    const response = await fetchApi<{ leave: Leave }>(`/api/guilds/${params.guildId}/leaves`, {
       method: 'POST',
       body: JSON.stringify({
         playerAllyCode: params.playerAllyCode,
@@ -1009,25 +1025,37 @@ export const leavesApi = {
         leaveType: params.leaveType || 'away',
         note: params.note,
       }),
-    }),
+    });
+    return response.leave;
+  },
 
-  getSummary: (params: { guildId: string; startDate?: string; endDate?: string }) => {
+  getSummary: async (params: { guildId: string; startDate?: string; endDate?: string }) => {
     const searchParams = new URLSearchParams();
     if (params.startDate) searchParams.set('startDate', params.startDate);
     if (params.endDate) searchParams.set('endDate', params.endDate);
     const query = searchParams.toString();
-    return fetchApi<LeaveSummary[]>(`/api/guilds/${params.guildId}/leaves/summary${query ? `?${query}` : ''}`);
+    const response = await fetchApi<{ data: LeaveSummary[] }>(
+      `/api/guilds/${params.guildId}/leaves/summary${query ? `?${query}` : ''}`
+    );
+    return response.data;
   },
 
   // Single leave routes (by ID)
-  get: (leaveId: number) => fetchApi<Leave>(`/api/leaves/${leaveId}`),
+  get: async (leaveId: number) => {
+    const response = await fetchApi<{ leave: Leave }>(`/api/leaves/${leaveId}`);
+    return response.leave;
+  },
 
-  update: (leaveId: number, data: { startDate?: string; endDate?: string; leaveType?: LeaveType; note?: string }) =>
-    fetchApi<Leave>(`/api/leaves/${leaveId}`, {
+  update: async (
+    leaveId: number,
+    data: { startDate?: string; endDate?: string; leaveType?: LeaveType; note?: string }
+  ) => {
+    const response = await fetchApi<{ leave: Leave }>(`/api/leaves/${leaveId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    });
+    return response.leave;
+  },
 
-  delete: (leaveId: number) =>
-    fetchApi<void>(`/api/leaves/${leaveId}`, { method: 'DELETE' }),
+  delete: (leaveId: number) => fetchApi<void>(`/api/leaves/${leaveId}`, { method: 'DELETE' }),
 };
