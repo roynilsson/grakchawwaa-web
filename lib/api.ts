@@ -935,3 +935,99 @@ export const squadsApi = {
   delete: (guildId: string, squadId: string) =>
     fetchApi<void>(`/api/guilds/${guildId}/squads/${squadId}`, { method: 'DELETE' }),
 };
+
+// Leave Types
+export type LeaveType = 'away' | 'busy';
+
+export interface Leave {
+  id: number;
+  guildId: string;
+  guildName?: string;
+  playerId: string;
+  playerName?: string;
+  playerAllyCode?: string;
+  startDate: string;
+  endDate: string;
+  leaveType: LeaveType;
+  note?: string;
+  createdByPlayerId: string;
+  createdByPlayerName?: string;
+}
+
+export interface LeaveSummary {
+  playerId: string;
+  playerName?: string;
+  allyCode?: string;
+  totalDays: number;
+  leaveCount: number;
+}
+
+// Leaves API
+export const leavesApi = {
+  // Player-scoped routes (for viewing/managing own leaves)
+  listMy: (params: { allyCode: string; active?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params.active !== undefined) searchParams.set('active', String(params.active));
+    const query = searchParams.toString();
+    return fetchApi<Leave[]>(`/api/players/${params.allyCode}/leaves${query ? `?${query}` : ''}`);
+  },
+
+  create: (params: { allyCode: string; startDate: string; endDate: string; leaveType?: LeaveType; note?: string }) =>
+    fetchApi<Leave>(`/api/players/${params.allyCode}/leaves`, {
+      method: 'POST',
+      body: JSON.stringify({
+        startDate: params.startDate,
+        endDate: params.endDate,
+        leaveType: params.leaveType || 'away',
+        note: params.note,
+      }),
+    }),
+
+  // Guild-scoped routes (for officers)
+  listByGuild: (params: { guildId: string; active?: boolean; playerId?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params.active !== undefined) searchParams.set('active', String(params.active));
+    if (params.playerId) searchParams.set('playerId', params.playerId);
+    const query = searchParams.toString();
+    return fetchApi<Leave[]>(`/api/guilds/${params.guildId}/leaves${query ? `?${query}` : ''}`);
+  },
+
+  createForPlayer: (params: {
+    guildId: string;
+    playerAllyCode: string;
+    startDate: string;
+    endDate: string;
+    leaveType?: LeaveType;
+    note?: string;
+  }) =>
+    fetchApi<Leave>(`/api/guilds/${params.guildId}/leaves`, {
+      method: 'POST',
+      body: JSON.stringify({
+        playerAllyCode: params.playerAllyCode,
+        startDate: params.startDate,
+        endDate: params.endDate,
+        leaveType: params.leaveType || 'away',
+        note: params.note,
+      }),
+    }),
+
+  getSummary: (params: { guildId: string; startDate?: string; endDate?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params.startDate) searchParams.set('startDate', params.startDate);
+    if (params.endDate) searchParams.set('endDate', params.endDate);
+    const query = searchParams.toString();
+    return fetchApi<LeaveSummary[]>(`/api/guilds/${params.guildId}/leaves/summary${query ? `?${query}` : ''}`);
+  },
+
+  // Single leave routes (by ID)
+  get: (leaveId: number) => fetchApi<Leave>(`/api/leaves/${leaveId}`),
+
+  update: (leaveId: number, data: { startDate?: string; endDate?: string; leaveType?: LeaveType; note?: string }) =>
+    fetchApi<Leave>(`/api/leaves/${leaveId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (leaveId: number) =>
+    fetchApi<void>(`/api/leaves/${leaveId}`, { method: 'DELETE' }),
+};
