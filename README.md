@@ -6,7 +6,9 @@ Web interface for the Grakchawwaa SWGOH guild management system.
 
 Next.js-based web application providing a dashboard for guild officers and members to manage:
 - Guild member information and admin roles
-- Ticket violations and warnings
+- Warnings with categories, edit/delete, and CSV import
+- Ticket violations tracking
+- Leave requests and approvals
 - Raid performance and configuration
 - Squad and fleet templates
 - Automated task scheduling
@@ -31,8 +33,9 @@ Next.js-based web application providing a dashboard for guild officers and membe
 | **Dashboard** | Overview of personal stats and guild information |
 | **Raids** | View current raid progress and leaderboard |
 | **Raid History** | Browse past raid results with pagination |
-| **Warnings** | View personal warning history |
+| **Warnings** | View personal warning history and summary |
 | **Violations** | Track ticket collection performance |
+| **Leaves** | Request leave, view status, delete requests |
 | **Settings** | Configure Mhann API key for raid tracking |
 
 ### For Officers (Member Level 3+ or Admin)
@@ -40,9 +43,11 @@ Next.js-based web application providing a dashboard for guild officers and membe
 | Feature | Description |
 |---------|-------------|
 | **Guild Members** | View roster, grant/revoke admin status |
-| **Guild Warnings** | Issue warnings, view guild-wide history, bulk CSV import |
+| **Guild Warnings** | Issue/edit/delete warnings, view history, bulk CSV import |
+| **Warning Summary** | View guild-wide warning point rankings |
 | **Guild Violations** | View ticket violations across all members, bulk CSV import |
-| **Warning Types** | Create and manage custom warning categories |
+| **Leaves** | View all leave requests, approve/reject |
+| **Warning Types** | Create and manage warning types with categories |
 | **Raid Configuration** | Set minimum score targets (guild-wide and per-player) |
 | **Automations** | Configure scheduled tasks and notifications |
 | **Squads** | Create and manage squad templates |
@@ -65,45 +70,38 @@ grakchawwaa-web/
 ├── app/
 │   ├── page.tsx                         # Landing page
 │   ├── privacy-policy/page.tsx          # Privacy policy
-│   ├── select-player/page.tsx           # Multi-account player selection
 │   ├── auth/callback/page.tsx           # Discord OAuth callback
-│   └── dashboard/
-│       ├── page.tsx                     # Main dashboard
-│       ├── settings/page.tsx            # User settings (API key)
-│       ├── warnings/page.tsx            # Personal warnings
-│       ├── violations/page.tsx          # Personal violations
-│       ├── raids/
-│       │   ├── page.tsx                 # Current raid view
-│       │   └── history/page.tsx         # Raid history
-│       ├── game-data/
-│       │   ├── characters/
-│       │   │   ├── page.tsx             # Character list
-│       │   │   └── [baseId]/page.tsx    # Character detail
-│       │   ├── ships/
-│       │   │   ├── page.tsx             # Ship list
-│       │   │   └── [baseId]/page.tsx    # Ship detail
-│       │   └── journey-guides/
-│       │       ├── page.tsx             # Journey guide list
-│       │       └── [id]/page.tsx        # Journey guide detail
-│       └── guild/
-│           ├── members/page.tsx         # Guild roster (officers)
-│           ├── warnings/page.tsx        # Guild warnings (officers)
-│           ├── violations/page.tsx      # Guild violations (officers)
-│           ├── warning-types/page.tsx   # Warning types (officers)
-│           ├── raid-config/page.tsx     # Raid targets (officers)
-│           ├── automations/page.tsx     # Automation config (officers)
-│           ├── squads/
-│           │   ├── page.tsx             # Squad list
-│           │   ├── new/page.tsx         # Create squad
-│           │   └── [squadId]/edit/page.tsx
-│           └── fleets/
-│               ├── page.tsx             # Fleet list
-│               ├── new/page.tsx         # Create fleet
-│               └── [fleetId]/edit/page.tsx
+│   └── (authenticated)/
+│       ├── layout.tsx                   # Dashboard layout with sidebar
+│       ├── player/
+│       │   ├── page.tsx                 # Player dashboard
+│       │   ├── settings/page.tsx        # User settings (API key)
+│       │   ├── warnings/page.tsx        # Personal warnings
+│       │   ├── violations/page.tsx      # Personal violations
+│       │   └── leaves/page.tsx          # Personal leave requests
+│       ├── officer/
+│       │   ├── warnings/page.tsx        # Guild warnings (issue/edit/delete)
+│       │   ├── warnings/summary/page.tsx # Warning point summary
+│       │   ├── violations/page.tsx      # Guild violations
+│       │   ├── leaves/page.tsx          # Guild leave management
+│       │   ├── warning-types/page.tsx   # Warning type config
+│       │   ├── automations/page.tsx     # Automation config
+│       │   └── raid-config/page.tsx     # Raid targets
+│       ├── guild/
+│       │   ├── members/page.tsx         # Guild roster
+│       │   ├── raids/page.tsx           # Current raid view
+│       │   ├── raids/history/page.tsx   # Raid history
+│       │   ├── squads/                  # Squad management
+│       │   └── fleets/                  # Fleet management
+│       └── game-data/
+│           ├── characters/              # Character list and details
+│           ├── ships/                   # Ship list and details
+│           └── journey-guides/          # Journey guide list and details
 ├── components/
 │   ├── Header.tsx                       # Dashboard header with player selector
 │   ├── Sidebar.tsx                      # Navigation sidebar
-│   └── ImportCsvModal.tsx               # CSV import modal
+│   ├── ImportCsvModal.tsx               # CSV import modal
+│   └── IssueWarningModal.tsx            # Warning issuance modal
 ├── lib/
 │   ├── api.ts                           # Backend API client
 │   └── auth-context.tsx                 # Authentication context provider
@@ -184,11 +182,15 @@ The web app communicates with grakchawwaa-backend via REST API:
 // Example: Fetch active raid
 const raidData = await raidsApi.getActive(guildId);
 
-// Example: Update player API key
-await playersApi.update(allyCode, { mhannApiKey: 'key' });
+// Example: Issue a warning
+await warningsApi.issue(guildId, {
+  playerAllyCode: '123456789',
+  warningTypeId: 1,
+  note: 'Missed raid participation'
+});
 
-// Example: Configure raid target
-await raidsApi.updateGuildConfig(guildId, 'krayt', 500000000);
+// Example: Get warning summary
+const summary = await warningsApi.getSummary(guildId, [7, 30, 90]);
 
 // Example: Create a squad
 await squadsApi.create(guildId, {
@@ -199,26 +201,36 @@ await squadsApi.create(guildId, {
 });
 ```
 
-See [`lib/api.ts`](lib/api.ts) for complete API client.
+See [lib/api.ts](lib/api.ts) for complete API client.
 
 ## Key Workflows
+
+### Warning Management
+1. Navigate to **Officer Tools > Warnings**
+2. Click "Issue Warning" to open modal
+3. Select player, warning type, add optional note
+4. Edit or delete existing warnings from the table
+5. Use CSV import for bulk warnings
+
+### Leave Management
+1. Players: **My Stuff > Leaves** to request/view leaves
+2. Officers: **Officer Tools > Leaves** to approve/reject
 
 ### Raid Configuration
 1. Navigate to **Officer Tools > Raid Configuration**
 2. Select raid type (Order 66, Naboo, or Krayt Dragon)
 3. Set guild minimum score target
 4. Set individual player targets (optional)
-5. Configuration persists per raid type
 
 ### Automation Setup
 1. Navigate to **Officer Tools > Automations**
-2. Select automation type (ticket collection, raid collection, etc.)
+2. Select automation type (ticket collection, raid collection, warning summary, etc.)
 3. Choose a pre-registered Discord channel
-4. Configure timing (offsets, reminder hours)
+4. Configure timing (offsets, reminder hours, periods)
 5. Enable the automation
 
 ### Squad/Fleet Builder
-1. Navigate to **Officer Tools > Squads** or **Fleets**
+1. Navigate to **Guild > Squads** or **Fleets**
 2. Click "New Squad" or "New Fleet"
 3. Configure slots (specific character, category requirement, or pool)
 4. Add requirement badges (relic level, gear, rarity)
