@@ -1059,3 +1059,105 @@ export const leavesApi = {
 
   delete: (leaveId: number) => fetchApi<void>(`/api/leaves/${leaveId}`, { method: 'DELETE' }),
 };
+
+// Roster Types
+export interface CharacterRosterItem {
+  baseId: string;
+  name: string;
+  thumbnailName: string;
+  isGalacticLegend: boolean;
+  rarity: number;
+  gearLevel: number;
+  relicLevel: number;
+  categories: string[];
+  abilities: { skillId: string; hasZeta: boolean; hasOmicron: boolean }[];
+}
+
+export interface ShipRosterItem {
+  baseId: string;
+  name: string;
+  thumbnailName: string;
+  isCapital: boolean;
+  rarity: number;
+  categories: string[];
+  crew: { baseId: string; name: string; thumbnailName: string }[];
+}
+
+export interface FullRosterResponse {
+  player: {
+    allyCode: string;
+    name: string;
+    playerLevel: number;
+    galacticPower: number;
+    characterGalacticPower: number;
+    shipGalacticPower: number;
+  };
+  characters?: CharacterRosterItem[];
+  ships?: ShipRosterItem[];
+}
+
+export interface RosterCharactersFilters {
+  search?: string;
+  category?: string;
+  hasZeta?: boolean;
+  hasOmicron?: boolean;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface RosterShipsFilters {
+  search?: string;
+  category?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface RosterCharactersResponse {
+  data: CharacterRosterItem[];
+  pagination: PaginationInfo;
+}
+
+export interface RosterShipsResponse {
+  data: ShipRosterItem[];
+  pagination: PaginationInfo;
+}
+
+// Roster API
+export const rosterApi = {
+  getFullRoster: (allyCode: string, type?: 'characters' | 'ships') => {
+    const params = new URLSearchParams();
+    if (type) params.set('type', type);
+    const query = params.toString();
+    return fetchApi<FullRosterResponse>(`/api/players/${allyCode}/roster${query ? `?${query}` : ''}`);
+  },
+
+  getCharacters: (allyCode: string, filters: RosterCharactersFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.category) params.set('category', filters.category);
+    if (filters.hasZeta !== undefined) params.set('hasZeta', String(filters.hasZeta));
+    if (filters.hasOmicron !== undefined) params.set('hasOmicron', String(filters.hasOmicron));
+    if (filters.sort) params.set('sort', filters.sort);
+    if (filters.order) params.set('order', filters.order);
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.limit) params.set('limit', String(filters.limit));
+    const query = params.toString();
+    return fetchApi<RosterCharactersResponse>(`/api/players/${allyCode}/roster/characters${query ? `?${query}` : ''}`);
+  },
+
+  getShips: (allyCode: string, filters: RosterShipsFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.category) params.set('category', filters.category);
+    if (filters.sort) params.set('sort', filters.sort);
+    if (filters.order) params.set('order', filters.order);
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.limit) params.set('limit', String(filters.limit));
+    const query = params.toString();
+    return fetchApi<RosterShipsResponse>(`/api/players/${allyCode}/roster/ships${query ? `?${query}` : ''}`);
+  },
+};
