@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useAuth } from '../../../../lib/auth-context';
 import { guildApi, GuildMemberDetailed, getMemberRole } from '../../../../lib/api';
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -245,7 +246,12 @@ export default function MembersPage() {
                     }`}
                   >
                     <td className="px-4 py-3 text-sm font-medium">
-                      {member.player.name || 'Unknown'}
+                      <Link
+                        href={`/player/${member.player.allyCode}/roster`}
+                        className="hover:text-indigo-400 transition-colors"
+                      >
+                        {member.player.name || 'Unknown'}
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-400 font-mono">
                       {member.player.allyCode}

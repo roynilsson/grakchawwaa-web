@@ -23,6 +23,7 @@ const navSections: NavSection[] = [
     basePath: '/player',
     items: [
       { label: 'Dashboard', href: '/player' },
+      { label: 'My Roster', href: '/player/roster' },
       { label: 'My Warnings', href: '/player/warnings' },
       { label: 'My Violations', href: '/player/violations' },
       { label: 'My Leaves', href: '/player/leaves' },
