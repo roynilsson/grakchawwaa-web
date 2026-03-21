@@ -92,10 +92,10 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
   const isActive = (path: string) => pathname === path;
 
   const linkClasses = (path: string) =>
-    `block px-4 py-2 rounded transition-colors ${
+    `block px-4 py-1.5 text-sm rounded transition-colors ${
       isActive(path)
         ? 'bg-indigo-600 text-white'
-        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+        : 'text-gray-400 hover:bg-gray-700 hover:text-white'
     }`;
 
   const visibleSections = navSections.filter(
@@ -131,16 +131,19 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
             </svg>
           </button>
 
-          <nav className="space-y-2 mt-8 lg:mt-0">
-            {visibleSections.map((section) => (
-              <div key={section.basePath}>
+          <nav className="mt-8 lg:mt-0">
+            {visibleSections.map((section, index) => (
+              <div
+                key={section.basePath}
+                className={`${index > 0 ? 'border-t border-gray-700 mt-3 pt-3' : ''}`}
+              >
                 <button
                   onClick={() => toggleSection(section.basePath)}
-                  className="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold text-gray-200 hover:text-white transition-colors"
                 >
                   <span>{section.title}</span>
                   <svg
-                    className={`w-4 h-4 transition-transform ${
+                    className={`w-4 h-4 text-gray-500 transition-transform ${
                       expandedSections[section.basePath] ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -151,7 +154,7 @@ export function Sidebar({ isOfficer, isOpen, onClose }: SidebarProps) {
                   </svg>
                 </button>
                 {expandedSections[section.basePath] && (
-                  <div className="space-y-1 mt-1">
+                  <div className="space-y-0.5 mt-1 ml-2">
                     {section.items.map((item) => (
                       <Link
                         key={item.href}
