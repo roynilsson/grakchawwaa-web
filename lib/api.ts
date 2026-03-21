@@ -1069,7 +1069,7 @@ export interface CharacterRosterItem {
   rarity: number;
   gearLevel: number;
   relicLevel: number;
-  categories: string[];
+  categories: GameCategory[];
   abilities: { skillId: string; hasZeta: boolean; hasOmicron: boolean }[];
 }
 
@@ -1079,18 +1079,17 @@ export interface ShipRosterItem {
   thumbnailName: string;
   isCapital: boolean;
   rarity: number;
-  categories: string[];
+  categories: GameCategory[];
   crew: { baseId: string; name: string; thumbnailName: string }[];
 }
 
 export interface FullRosterResponse {
   player: {
     allyCode: string;
-    name: string;
-    playerLevel: number;
-    galacticPower: number;
-    characterGalacticPower: number;
-    shipGalacticPower: number;
+    name?: string;
+    playerId?: string;
+    playerLevel?: number;
+    galacticPower?: number;
   };
   characters?: CharacterRosterItem[];
   ships?: ShipRosterItem[];
