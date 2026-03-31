@@ -313,6 +313,7 @@ export const playersApi = {
     discordId?: string;
     isMain?: boolean;
     mhannApiKey?: string;
+    allowGuildApiKeyUse?: boolean;
   }) =>
     fetchApi<{ player: Player }>(`/api/players/${allyCode}`, {
       method: 'PUT',
