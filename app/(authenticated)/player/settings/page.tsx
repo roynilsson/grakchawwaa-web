@@ -129,6 +129,65 @@ export default function SettingsPage() {
             </p>
           </div>
 
+          {/* Guild API Key Usage Consent */}
+          <div className="pt-4 border-t border-gray-700">
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="allowGuildUse"
+                checked={allowGuildUse}
+                onChange={(e) => handleConsentChange(e.target.checked)}
+                disabled={savingConsent || !hasApiKey}
+                className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="allowGuildUse"
+                    className={`text-sm font-medium ${!hasApiKey ? 'text-gray-500' : 'text-gray-200'}`}
+                  >
+                    Allow guild to use my API key for data fetching
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowTooltip(!showTooltip)}
+                      onMouseEnter={() => setShowTooltip(true)}
+                      onMouseLeave={() => setShowTooltip(false)}
+                      className="text-gray-400 hover:text-gray-300"
+                      aria-label="More information"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </button>
+                    {showTooltip && (
+                      <div className="absolute left-6 top-0 z-10 w-80 p-3 text-sm bg-gray-900 border border-gray-600 rounded-lg shadow-lg">
+                        <p className="text-gray-300">{tooltipText}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {!hasApiKey && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    You need to save an API key first before enabling this option.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={saving || !apiKey}
@@ -137,65 +196,6 @@ export default function SettingsPage() {
             {saving ? 'Saving...' : 'Save API Key'}
           </button>
         </form>
-
-        {/* Guild API Key Usage Consent */}
-        <div className="mt-6 pt-6 border-t border-gray-700">
-          <div className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="allowGuildUse"
-              checked={allowGuildUse}
-              onChange={(e) => handleConsentChange(e.target.checked)}
-              disabled={savingConsent || !hasApiKey}
-              className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="allowGuildUse"
-                  className={`text-sm font-medium ${!hasApiKey ? 'text-gray-500' : 'text-gray-200'}`}
-                >
-                  Allow guild to use my API key for data fetching
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowTooltip(!showTooltip)}
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
-                    className="text-gray-400 hover:text-gray-300"
-                    aria-label="More information"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </button>
-                  {showTooltip && (
-                    <div className="absolute left-6 top-0 z-10 w-80 p-3 text-sm bg-gray-900 border border-gray-600 rounded-lg shadow-lg">
-                      <p className="text-gray-300">{tooltipText}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {!hasApiKey && (
-                <p className="mt-1 text-xs text-gray-500">
-                  You need to save an API key first before enabling this option.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Message display */}
         {message && (
