@@ -254,6 +254,8 @@ export const guildApi = {
   },
   getChannels: (guildId: string) =>
     fetchApi<{ channels: GuildChannel[] }>(`/api/guilds/${guildId}/channels`),
+  getRoles: (guildId: string) =>
+    fetchApi<{ roles: GuildRole[] }>(`/api/guilds/${guildId}/roles`),
   toggleAdmin: (guildId: string, allyCode: string, isAdmin: boolean, callerAllyCode: string) =>
     fetchApi<{ member: GuildMemberDetailed }>(`/api/guilds/${guildId}/members/${allyCode}/admin`, {
       method: 'POST',
@@ -322,6 +324,8 @@ export const playersApi = {
 export const raidsApi = {
   getActive: (guildId: string) =>
     fetchApi<ActiveRaidResponse>(`/api/guilds/${guildId}/raids/active`),
+  getConfigs: (guildId: string) =>
+    fetchApi<RaidConfigsResponse>(`/api/guilds/${guildId}/raids/configs`),
   getHistory: (guildId: string, params?: { raidType?: string; limit?: number; offset?: number }) => {
     const searchParams = new URLSearchParams();
     if (params?.raidType) searchParams.set('raidType', params.raidType);
@@ -346,6 +350,14 @@ export const raidsApi = {
         body: JSON.stringify({ playerMinScore }),
       }
     ),
+  setDefaultRaidType: (guildId: string, raidType: string) =>
+    fetchApi<{ success: boolean; defaultRaidType: string }>(
+      `/api/guilds/${guildId}/default-raid-type`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ raidType }),
+      }
+    ),
 };
 
 // Types
@@ -354,6 +366,12 @@ export type MemberRole = 'Leader' | 'Officer' | 'Member';
 export interface GuildChannel {
   id: number;
   discordChannelId: string;
+  name: string;
+}
+
+export interface GuildRole {
+  id: number;
+  discordRoleId: string;
   name: string;
 }
 
@@ -493,6 +511,7 @@ export interface AutomationTypeConfig {
     hasReminderHours?: boolean;
     hasOffsetMinutes?: boolean;
     hasDualOffsets?: boolean;
+    hasRoleId?: boolean;
   };
 }
 
@@ -501,6 +520,12 @@ export type AutomationTypesRegistry = Record<string, AutomationTypeConfig>;
 export interface ResolvedChannel {
   id: number;
   discordChannelId: string;
+  name: string;
+}
+
+export interface ResolvedRole {
+  id: number;
+  discordRoleId: string;
   name: string;
 }
 
@@ -514,6 +539,7 @@ export interface Automation {
   lastRunAt?: string;
   config: Record<string, unknown>;
   resolvedChannel?: ResolvedChannel;
+  resolvedRole?: ResolvedRole;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -529,6 +555,7 @@ export interface Player {
   galacticPower?: number | string;
   lastActivityTime?: string;
   mhannApiKey?: string;
+  allowGuildApiKeyUse?: boolean;
   registeredAt: string;
 }
 
@@ -558,6 +585,7 @@ export interface ActiveRaidResponse {
     guildMinScore: number;
   };
   playerConfigs: PlayerRaidConfig[];
+  defaultRaidType: string | null;
 }
 
 export interface RaidHistoryResult {
@@ -581,6 +609,12 @@ export interface RaidHistoryResponse {
     avgScore: number;
   }>;
   total: number;
+}
+
+export interface RaidConfigsResponse {
+  guildConfigs: Record<string, { guildMinScore: number }>;
+  playerConfigs: Record<string, Array<{ allyCode: string; playerMinScore?: number; allTimeHigh: number }>>;
+  defaultRaidType: string | null;
 }
 
 // Game Data Types

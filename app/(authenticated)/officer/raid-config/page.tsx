@@ -21,6 +21,7 @@ export default function RaidConfigPage() {
   const { session } = useAuth();
   const router = useRouter();
   const [selectedRaidType, setSelectedRaidType] = useState('krayt');
+  const [defaultRaidType, setDefaultRaidType] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, ConfigData>>({
     order66: { guildMinScore: '', playerScores: {} },
     naboo: { guildMinScore: '', playerScores: {} },
@@ -29,6 +30,7 @@ export default function RaidConfigPage() {
   const [members, setMembers] = useState<GuildMemberDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [settingDefault, setSettingDefault] = useState(false);
 
   const selectedPlayer = session?.players.find(
     (p) => p.allyCode === session.selectedAllyCode
@@ -46,27 +48,37 @@ export default function RaidConfigPage() {
 
     setLoading(true);
     try {
-      const [membersData, ...raidDataArray] = await Promise.all([
+      const [membersData, configsData] = await Promise.all([
         guildApi.getMembersDetailed(selectedPlayer.guildId, false),
-        ...RAID_TYPES.map(type => raidsApi.getActive(selectedPlayer.guildId)),
+        raidsApi.getConfigs(selectedPlayer.guildId),
       ]);
 
       setMembers(membersData.members);
 
+      // Get default raid type from response
+      const serverDefaultRaidType = configsData.defaultRaidType ?? null;
+      setDefaultRaidType(serverDefaultRaidType);
+
+      // Pre-select the default raid type if available
+      if (serverDefaultRaidType) {
+        setSelectedRaidType(serverDefaultRaidType);
+      }
+
       const newConfigs: Record<string, ConfigData> = {};
 
-      RAID_TYPES.forEach((type, index) => {
-        const raidData = raidDataArray[index];
+      RAID_TYPES.forEach((type) => {
+        const guildConfig = configsData.guildConfigs[type.value];
+        const playerConfigsForType = configsData.playerConfigs[type.value] || [];
 
         newConfigs[type.value] = {
-          guildMinScore: raidData.guildConfig?.guildMinScore?.toString() || '',
+          guildMinScore: guildConfig?.guildMinScore?.toString() || '',
           playerScores: {},
         };
 
         // Set player scores from existing configs
-        raidData.playerConfigs.forEach(config => {
-          if (config.playerMinScore) {
-            newConfigs[type.value].playerScores[config.player.allyCode] = config.playerMinScore.toString();
+        playerConfigsForType.forEach(config => {
+          if (config.playerMinScore !== undefined) {
+            newConfigs[type.value].playerScores[config.allyCode] = config.playerMinScore.toString();
           }
         });
       });
@@ -168,6 +180,21 @@ export default function RaidConfigPage() {
     });
   };
 
+  const handleSetDefaultRaidType = async () => {
+    if (!selectedPlayer) return;
+
+    setSettingDefault(true);
+    try {
+      await raidsApi.setDefaultRaidType(selectedPlayer.guildId, selectedRaidType);
+      setDefaultRaidType(selectedRaidType);
+      toast.success(`Set ${RAID_TYPES.find(t => t.value === selectedRaidType)?.label} as guild default`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to set default raid type');
+    } finally {
+      setSettingDefault(false);
+    }
+  };
+
   if (!selectedPlayer || selectedPlayer.memberLevel < 3 && !selectedPlayer.isAdmin) {
     return <div className="text-center py-8">Access denied</div>;
   }
@@ -196,6 +223,27 @@ export default function RaidConfigPage() {
             </option>
           ))}
         </select>
+
+        {/* Default Raid Indicator/Button */}
+        <div className="mt-3">
+          {selectedRaidType === defaultRaidType ? (
+            <span className="inline-flex items-center text-sm text-green-400">
+              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Guild Default
+            </span>
+          ) : (
+            <button
+              onClick={handleSetDefaultRaidType}
+              disabled={settingDefault}
+              className="text-sm text-indigo-400 hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {settingDefault ? 'Setting...' : 'Make Guild Default'}
+            </button>
+          )}
+        </div>
+
         <p className="mt-2 text-xs text-gray-400">
           Configure minimum score targets for this raid type. These targets will be used for warnings and tracking.
         </p>
