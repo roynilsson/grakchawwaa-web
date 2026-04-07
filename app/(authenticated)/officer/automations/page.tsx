@@ -9,6 +9,7 @@ import {
   AutomationTypesRegistry,
   WarningType,
   GuildChannel,
+  GuildRole,
   GuildMemberDetailed,
 } from '../../../../lib/api';
 import { useState, useEffect, useCallback } from 'react';
@@ -29,6 +30,7 @@ interface FormData {
   enabled: boolean;
   thresholds: ThresholdConfig[];
   guildChannelId: number | null;
+  guildRoleId: number | null;
   playerId: string | null;
   reminderHours: number[];
   primaryOffsetMinutes: number;
@@ -59,6 +61,7 @@ export default function AutomationsPage() {
   const [automationTypes, setAutomationTypes] = useState<AutomationTypesRegistry>({});
   const [warningTypes, setWarningTypes] = useState<WarningType[]>([]);
   const [guildChannels, setGuildChannels] = useState<GuildChannel[]>([]);
+  const [guildRoles, setGuildRoles] = useState<GuildRole[]>([]);
   const [guildMembers, setGuildMembers] = useState<GuildMemberDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +73,7 @@ export default function AutomationsPage() {
     enabled: true,
     thresholds: [{ threshold: 600, warningTypeId: 0 }],
     guildChannelId: null,
+    guildRoleId: null,
     playerId: null,
     reminderHours: [24, 6],
     primaryOffsetMinutes: 15,
@@ -95,17 +99,19 @@ export default function AutomationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [automationsRes, typesRes, warningTypesRes, channelsRes, membersRes] = await Promise.all([
+      const [automationsRes, typesRes, warningTypesRes, channelsRes, rolesRes, membersRes] = await Promise.all([
         automationsApi.list(selectedPlayer.guildId),
         automationsApi.getTypes(),
         warningsApi.getTypes(selectedPlayer.guildId),
         guildApi.getChannels(selectedPlayer.guildId),
+        guildApi.getRoles(selectedPlayer.guildId),
         guildApi.getMembersDetailed(selectedPlayer.guildId, false, true), // only active members with API keys
       ]);
       setAutomations(automationsRes.automations);
       setAutomationTypes(typesRes.automationTypes);
       setWarningTypes(warningTypesRes.warningTypes);
       setGuildChannels(channelsRes.channels);
+      setGuildRoles(rolesRes.roles);
       setGuildMembers(membersRes.members);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -155,6 +161,7 @@ export default function AutomationsPage() {
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
       guildChannelId: null,
+      guildRoleId: null,
       playerId: null,
       reminderHours: [24, 6],
       primaryOffsetMinutes: (typeConfig?.defaultConfig as { primaryOffsetMinutes?: number })?.primaryOffsetMinutes ?? 15,
@@ -166,6 +173,7 @@ export default function AutomationsPage() {
     const config = automation.config as {
       thresholds?: ThresholdConfig[];
       guildChannelId?: number;
+      guildRoleId?: number;
       playerId?: string;
       reminderHours?: number[];
       primaryOffsetMinutes?: number;
@@ -182,6 +190,7 @@ export default function AutomationsPage() {
         { threshold: 600, warningTypeId: warningTypes[0]?.id || 0 },
       ],
       guildChannelId: config.guildChannelId ?? null,
+      guildRoleId: config.guildRoleId ?? null,
       playerId: config.playerId ?? null,
       reminderHours: config.reminderHours ?? [24, 6],
       primaryOffsetMinutes: config.primaryOffsetMinutes ?? config.offsetMinutes ?? 15,
@@ -198,6 +207,7 @@ export default function AutomationsPage() {
       enabled: true,
       thresholds: [{ threshold: 600, warningTypeId: warningTypes[0]?.id || 0 }],
       guildChannelId: null,
+      guildRoleId: null,
       playerId: null,
       reminderHours: [24, 6],
       primaryOffsetMinutes: 15,
@@ -251,6 +261,11 @@ export default function AutomationsPage() {
       // Add reminderHours if the type supports it
       if (typeConfig?.config?.hasReminderHours) {
         config.reminderHours = formData.reminderHours;
+      }
+
+      // Add guildRoleId if the type supports it
+      if (typeConfig?.config?.hasRoleId) {
+        config.guildRoleId = formData.guildRoleId;
       }
 
       // Add dual offsets if the type supports it (e.g., ticket_collection)
@@ -670,6 +685,41 @@ export default function AutomationsPage() {
               </div>
             )}
 
+            {/* Role (for notification types with role mention) */}
+            {automationTypes[formData.automationType]?.config?.hasRoleId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                  Discord Role to Mention
+                </label>
+                {guildRoles.length === 0 ? (
+                  <div className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-yellow-500 text-sm">
+                    No roles registered. Use /officer setup role-add in Discord first.
+                  </div>
+                ) : (
+                  <select
+                    value={formData.guildRoleId ?? ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        guildRoleId: e.target.value ? Number(e.target.value) : null
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">No role (don&apos;t mention)</option>
+                    {guildRoles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        @{role.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Roles are registered via Discord commands. Use /officer setup role-add to add roles.
+                </p>
+              </div>
+            )}
+
             {/* Dual Offset Minutes (for ticket collection) */}
             {automationTypes[formData.automationType]?.config?.hasDualOffsets && (
               <div className="space-y-4">
@@ -858,6 +908,15 @@ export default function AutomationsPage() {
                               <span className="text-yellow-500">Not configured</span>
                             );
                           })()}
+                        </div>
+                      )}
+                      {automationTypes[automation.automationType]?.config?.hasRoleId && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Mention: {automation.resolvedRole ? (
+                            `@${automation.resolvedRole.name}`
+                          ) : (
+                            <span>None</span>
+                          )}
                         </div>
                       )}
                       {automationTypes[automation.automationType]?.config?.hasDualOffsets && (
