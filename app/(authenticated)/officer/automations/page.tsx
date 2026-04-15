@@ -35,6 +35,9 @@ interface FormData {
   reminderHours: number[];
   primaryOffsetMinutes: number;
   finalOffsetMinutes: number;
+  noParticipationWarningTypeId: number | null;
+  belowTargetWarningTypeId: number | null;
+  belowAthWarningTypeId: number | null;
 }
 
 const INTERVAL_LABELS: Record<string, string> = {
@@ -78,6 +81,9 @@ export default function AutomationsPage() {
     reminderHours: [24, 6],
     primaryOffsetMinutes: 15,
     finalOffsetMinutes: 2,
+    noParticipationWarningTypeId: null,
+    belowTargetWarningTypeId: null,
+    belowAthWarningTypeId: null,
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -166,6 +172,9 @@ export default function AutomationsPage() {
       reminderHours: [24, 6],
       primaryOffsetMinutes: (typeConfig?.defaultConfig as { primaryOffsetMinutes?: number })?.primaryOffsetMinutes ?? 15,
       finalOffsetMinutes: (typeConfig?.defaultConfig as { finalOffsetMinutes?: number })?.finalOffsetMinutes ?? 2,
+      noParticipationWarningTypeId: null,
+      belowTargetWarningTypeId: null,
+      belowAthWarningTypeId: null,
     });
   };
 
@@ -179,6 +188,9 @@ export default function AutomationsPage() {
       primaryOffsetMinutes?: number;
       finalOffsetMinutes?: number;
       offsetMinutes?: number;
+      noParticipationWarningTypeId?: number;
+      belowTargetWarningTypeId?: number;
+      belowAthWarningTypeId?: number;
     };
     setFormMode('edit');
     setEditingId(automation.id);
@@ -195,6 +207,9 @@ export default function AutomationsPage() {
       reminderHours: config.reminderHours ?? [24, 6],
       primaryOffsetMinutes: config.primaryOffsetMinutes ?? config.offsetMinutes ?? 15,
       finalOffsetMinutes: config.finalOffsetMinutes ?? 2,
+      noParticipationWarningTypeId: config.noParticipationWarningTypeId ?? null,
+      belowTargetWarningTypeId: config.belowTargetWarningTypeId ?? null,
+      belowAthWarningTypeId: config.belowAthWarningTypeId ?? null,
     });
   };
 
@@ -212,6 +227,9 @@ export default function AutomationsPage() {
       reminderHours: [24, 6],
       primaryOffsetMinutes: 15,
       finalOffsetMinutes: 2,
+      noParticipationWarningTypeId: null,
+      belowTargetWarningTypeId: null,
+      belowAthWarningTypeId: null,
     });
   };
 
@@ -277,6 +295,19 @@ export default function AutomationsPage() {
       // Add offsetMinutes if the type supports it but NOT dual offsets (e.g., ticket_reminder)
       if (typeConfig?.config?.hasOffsetMinutes && !typeConfig?.config?.hasDualOffsets) {
         config.offsetMinutes = formData.primaryOffsetMinutes;
+      }
+
+      // Add raid warning config if the type supports it
+      if (typeConfig?.config?.hasRaidWarningConfig) {
+        if (formData.noParticipationWarningTypeId) {
+          config.noParticipationWarningTypeId = formData.noParticipationWarningTypeId;
+        }
+        if (formData.belowTargetWarningTypeId) {
+          config.belowTargetWarningTypeId = formData.belowTargetWarningTypeId;
+        }
+        if (formData.belowAthWarningTypeId) {
+          config.belowAthWarningTypeId = formData.belowAthWarningTypeId;
+        }
       }
 
       if (formMode === 'add') {
@@ -557,6 +588,89 @@ export default function AutomationsPage() {
                   Players with average tickets below each threshold will receive
                   the corresponding warning.
                 </p>
+              </div>
+            )}
+
+            {/* Raid Warning Config */}
+            {automationTypes[formData.automationType]?.config?.hasRaidWarningConfig && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Warning Conditions
+                </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Select a warning type for each condition. Leave empty to skip that check.
+                  If multiple conditions match, the highest severity warning is assigned.
+                </p>
+                <div className="space-y-3">
+                  <div className="bg-gray-750 p-3 rounded">
+                    <label className="block text-sm text-gray-300 mb-1">
+                      No participation (0 score)
+                    </label>
+                    <select
+                      value={formData.noParticipationWarningTypeId ?? ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          noParticipationWarningTypeId: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500 text-sm"
+                    >
+                      <option value="">None (skip)</option>
+                      {warningTypes.map((wt) => (
+                        <option key={wt.id} value={wt.id}>
+                          {wt.name} (Severity {wt.severity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="bg-gray-750 p-3 rounded">
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Below target
+                    </label>
+                    <select
+                      value={formData.belowTargetWarningTypeId ?? ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          belowTargetWarningTypeId: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500 text-sm"
+                    >
+                      <option value="">None (skip)</option>
+                      {warningTypes.map((wt) => (
+                        <option key={wt.id} value={wt.id}>
+                          {wt.name} (Severity {wt.severity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="bg-gray-750 p-3 rounded">
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Below 90% all-time high
+                    </label>
+                    <select
+                      value={formData.belowAthWarningTypeId ?? ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          belowAthWarningTypeId: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
+                      className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500 text-sm"
+                    >
+                      <option value="">None (skip)</option>
+                      {warningTypes.map((wt) => (
+                        <option key={wt.id} value={wt.id}>
+                          {wt.name} (Severity {wt.severity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
 
