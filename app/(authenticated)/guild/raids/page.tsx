@@ -109,11 +109,6 @@ export default function RaidsPage() {
             <p className="text-sm text-gray-400">Guild Score</p>
             <p className="text-lg font-semibold">
               {raid.guildRewardScore.toLocaleString()}
-              {guildConfig && (
-                <span className="text-sm text-gray-400 ml-2">
-                  / {guildConfig.guildMinScore.toLocaleString()} target
-                </span>
-              )}
             </p>
           </div>
         </div>
@@ -200,7 +195,7 @@ export default function RaidsPage() {
                       {result.score.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-gray-400">
-                      {config?.playerMinScore ? config.playerMinScore.toLocaleString() : '-'}
+                      {(config?.playerMinScore ?? guildConfig?.guildMinScore)?.toLocaleString() ?? '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-gray-400">
                       {config?.allTimeHigh ? config.allTimeHigh.toLocaleString() : '-'}
