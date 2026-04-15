@@ -568,7 +568,7 @@ export default function AutomationsPage() {
                         <option value={0}>Select warning type...</option>
                         {warningTypes.map((wt) => (
                           <option key={wt.id} value={wt.id}>
-                            {wt.name} (Severity {wt.severity})
+                            {wt.category?.name ? `${wt.category.name} - ` : ''}{wt.name} (Severity {wt.severity})
                           </option>
                         ))}
                       </select>
@@ -619,7 +619,7 @@ export default function AutomationsPage() {
                       <option value="">None (skip)</option>
                       {warningTypes.map((wt) => (
                         <option key={wt.id} value={wt.id}>
-                          {wt.name} (Severity {wt.severity})
+                          {wt.category?.name ? `${wt.category.name} - ` : ''}{wt.name} (Severity {wt.severity})
                         </option>
                       ))}
                     </select>
@@ -642,7 +642,7 @@ export default function AutomationsPage() {
                       <option value="">None (skip)</option>
                       {warningTypes.map((wt) => (
                         <option key={wt.id} value={wt.id}>
-                          {wt.name} (Severity {wt.severity})
+                          {wt.category?.name ? `${wt.category.name} - ` : ''}{wt.name} (Severity {wt.severity})
                         </option>
                       ))}
                     </select>
@@ -665,7 +665,7 @@ export default function AutomationsPage() {
                       <option value="">None (skip)</option>
                       {warningTypes.map((wt) => (
                         <option key={wt.id} value={wt.id}>
-                          {wt.name} (Severity {wt.severity})
+                          {wt.category?.name ? `${wt.category.name} - ` : ''}{wt.name} (Severity {wt.severity})
                         </option>
                       ))}
                     </select>
